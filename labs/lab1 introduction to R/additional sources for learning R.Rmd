@@ -1,0 +1,5 @@
+<https://rpubs.com/margaret-swift/intro-to-r-01-orientation>
+
+<https://rpubs.com/margaret-swift/intro-to-r-02-basics>
+
+<https://rpubs.com/margaret-swift/intro-to-r-05-debugging>
