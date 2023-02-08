@@ -1,0 +1,178 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## for loops
+
+```{r}
+myLet = c('d','u','k','e')
+for (i in 1:4) {
+  for (j in 1: length(myLet)) {
+    let = myLet[j]
+    print(paste(i,let,sep = "-"))
+  }
+}
+```
+
+## Matrix
+
+create a matrix
+
+```{r}
+## the number of data should be equal to ncol * nrow
+myMatrix = matrix(data = rnorm(100, 0, 1), ncol = 5, nrow = 20)
+class(myMatrix)
+
+# length of this matrix is 100
+length(myMatrix)
+```
+
+create an empty vector to hold the mean of each row
+
+```{r}
+# seems like the defult mode of vector() command is "logical"
+meanV = vector(mode = 'numeric' ,length = nrow(myMatrix))
+
+help(vector)
+
+class(meanV)
+typeof(meanV)
+```
+
+loop over rows to get and store the mean of each row
+
+```{r}
+for (i in 1:length(nrow(myMatrix))) {
+  meanV[i] = mean(myMatrix[i,])
+}
+meanV
+```
+
+visualize each column (create five pictures in the plots)
+
+```{r}
+# pch: point style
+for (i in 1:ncol(myMatrix)) {
+  plot (myMatrix[,i], main = paste("Iteration number", i), pch = 15)
+}
+```
+
+## Dataframe
+
+create a dataframe
+
+```{r}
+fruits = c('apple', 'orange', 'banana', 'nectarine')
+dishes = c('waffles', 'pancakes', 'french toast', 'salad')
+
+df = data.frame(Fruit = fruits, Dish = dishes)
+
+# length of df equals to column numbers
+length(df)
+```
+
+print each rows: `df$(col_name)[i]`
+
+```{r}
+for (i in 1:length(fruits)) {
+  print(paste("I love", df$Fruit[i], "on", df$Dish[i]))
+}
+```
+
+rate fruits and save the result to df
+
+```{r}
+# nchar: the sum number of the string characters
+rate = function(fruit){
+  rating = nchar(fruit)
+  rating
+}
+
+for (i in 1:nrow(df)){
+  df$rate[i] = rate(df$Fruit[i])
+}
+```
+
+won't plot since the fruit is not numeric value
+
+```{r}
+plot(df$Fruit, df$rate)
+ggplot(df, aes(Fruit, rate), gem_col(),xlab('Fruits'),ylab('rating'))
+```
+
+## subset dataframe
+
+```{r}
+epa = read.csv ("labs/lab4 Confidence Intervals/epa2012.csv", sep = ",")
+```
+
+#### method 1 using index
+
+```{r}
+# and
+idx1 = which(epa$mfr_name == "Audi" & epa$comb_mpg > 25)
+subset1 = epa[idx1, ]
+
+# or
+idx2 = which(epa$mfr_name == "Audi" | epa$comb_mpg > 25)
+subset2 = epa[idx2, ]
+```
+
+#### method 2 subset function
+
+```{r}
+subset3 = subset(epa, epa$mfr_name == "Audi")
+```
+
+## Central limit theory (CLT)
+
+```{r}
+# a series of 0 for 10000 times
+umeans <- numeric(10000)
+
+set.seed(1001)
+
+## calculate the sample means for 10000 samples
+for (i in 1:10000){
+# Take the mean of a sample of 5 uniformly distributed numbers
+# and store it in the vector, umeans
+umeans[i] <- mean(runif(5, min = 0, max = 10))
+}
+```
+
+visualization
+
+```{r}
+# Make a histogram of the 10,000 means
+gg1 <- ggplot(data.frame(umeans), aes(x=umeans)) +
+geom_histogram(colour = "white", fill = "blue") +
+ylab("Frequency") + xlab("Sample means") +
+theme_bw()
+
+# Give it a gradient of colors for fun
+gg2 <- ggplot(data.frame(umeans), aes(x=umeans, fill = ..count..)) +
+geom_histogram(colour = "white") +
+ylab("") + xlab("Sample means") +
+scale_fill_gradient(low = "green", high = "blue") + theme_bw() +
+theme(legend.position="none")
+
+# alignment
+## install.packages("ggpubr", repos = "https://cloud.r-project.org/", dependencies = TRUE)
+ggpubr::ggarrange(gg1, gg2, ncol = 2, labels = "auto")
+```
+
+### To do 1
+
+```{r}
+test = seq(1,20)
+sqrt = numeric(20)
+for (i in 1:20) {
+  sqrt[i] = sqrt(test[i])
+}
+
+sqrt
+```
+
+## Testing for Normality
