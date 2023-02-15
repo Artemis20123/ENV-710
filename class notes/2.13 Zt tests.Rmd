@@ -32,7 +32,7 @@ pnorm(q = 2.9, mean = 0, sd = 1.69/sqrt(30), lower.tail = F)
 # p value is the same and does not change according to hypotheses H1 or H2. But the critical Z will change according to different hypotheses conditions
 ```
 
-one sample test: have one sample data two sampke test: data from two samples and comparison
+one sample test: have one sample data two sample test: data from two samples and comparison
 
 Assumption: independent; normally distributed/ two samples: approximately variance
 
