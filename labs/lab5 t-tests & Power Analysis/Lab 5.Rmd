@@ -1,0 +1,85 @@
+---
+title: "ENV 710: Lab 5"
+author: "Firstname Lastname"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=T, eval=T)
+# set your working directory using setwd()
+require(pwr)
+```
+
+## Write your report in R Markdown, including your answers and your R-code, and submit it to the class Sakai site under the folder Assignments.
+
+## Problem 1
+
+Analyze the following data. Write a brief paragraph that includes the following information: (a) your null and alternate hypotheses, (b) the type of test required (one-sample, two-sample, paired), (c) your critical statistic $t_c$, (d) your correctly reported results (e.g., ($t$ = 2.10, df = 32, $p$ = 0.22), and (e) a clear statement of your conclusion from the analysis. (f) If you made an error in statistical hypothesis testing, what type of error would you have made and why?
+
+A research study was conducted to examine the differences between older and younger adults on perceived life satisfaction. A pilot study was conducted to examine this hypothesis. Ten older adults (over the age of 50) and ten younger adults (between 20 and 30) were given a life satisfaction test (known to have high reliability and validity). Scores on the measure range from 0 to 60 with high scores indicative of high life satisfaction, and low scores indicative of low life satisfaction. The data are presented below. Compute the appropriate t-test.
+
+```{r problem1}
+# Problem 1
+young <- c(34, 22, 15, 27, 37, 41, 24, 19, 26, 36)
+old <- c(41, 24, 46, 39, 21, 33, 43, 40, 50, 41)
+
+```
+
+## Problem 2
+
+Using the life satisfaction data from Problem 1, now do the following: (a) calculate the effect size, $d$, for the study, and (b) conduct a power analysis and report the statistical power. Write a sentence explaining what the power tells you.
+
+```{r problem2}
+# Problem 2
+
+
+```
+
+## Problem 3
+
+A researcher hypothesizes that electrical stimulation of the lateral habenula will result in decreased food intake (in grams) in rats. Rats undergo stereotaxic surgery and an electrode is implanted in the right lateral habenula. Following a ten-day recovery period, rats (kept at 80% body weight) are tested for the amount of food consumed during a 10-minute period of time both with and without electrical stimulation. The rats are tested under one of the treatments (with or without electrical stimulation) and then tested under the other treatment after a period of rest. Compute the appropriate t-test for the data provided below and write a brief descriptive paragraph including all relevant information (as in Problem 1).
+
+```{r problem3}
+# Problem 3
+nostimulation <- c(18.4, 16.1,  9.2, 32.2, 13.8, 16.1, 27.6, 11.5, 11.5, 18.4,
+               22.3, 21.1, 16.4, 29.5, 27.9)
+stimulation <- c(27.6, 16.1,  6.9, 25.3, 18.4, 11.5, 32.2, 16.1, 20.7, 23.0,
+             24.7, 18.1, 26.5, 23.4, 8.3)
+
+```
+
+## Problem 4
+
+For your Master's project you have chosen to study whether exposure of Cardinal eggs to direct sunlight increases the mass of the hatchlings. You plan to locate Cardinal nests and open the vegetation around half of the nests (randomly chosen) to increase exposure to sunlight. A previous study on the nesting of the Eastern Bluebird found the effect size to be 0.4.
+
+What sample size should you aim for to have sufficient power (0.80) to detect a difference? Alter the above power graph to highlight the needs of your project, assuming that the effect size could vary between 0.3 and 0.5 and that your desired statistical power is between 0.60 and 0.80. Remember that your hypothesis is a one-sided test, and so you need to take this into account in your graph. Add a horizontal black line on your power graph that crosses the power curves at the required sample size. Make sure that sample size is on the y-axis and effect size is on the x-axis of your graph.
+
+```{r problem4}
+# Problem 4
+
+
+```
+
+## Problem 5
+
+Change the power curve graph in the lab text so that it plots the range of statistical power with sample sizes from 10 to 100. Make sure that sample size is on the x-axis and effect size is on the y-axis of your graph. What conclusion can you draw about your ability to conduct experiments with 80% power?
+
+```{r problem5, fig.cap=""}
+# Problem 5
+
+
+```
+
+\<!--
+
+------------------------------------------------------------------------
+
+If you want to use an Appendix, uncomment this section (remove the lines with \<! -- and -- \>) and change the echo in the line 9 opts_chunk to "echo=F"
+
+## Appendix
+
+```{r ref.label=knitr::all_labels(), echo = T, eval = F}
+```
+
+--\>

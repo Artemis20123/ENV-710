@@ -1,123 +1,205 @@
 ---
-title: "ENV 710: Lab 4"
-author: "Firstname Lastname"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: pdf_document
-header-includes:
- \usepackage{float}
+title: 'ENV 710: Lab 4'
+author: "Jiahuan Li"
+date: "Feb 14, 2023"
+output:
+  pdf_document: default
+  word_document: default
+header-includes: \usepackage{float}
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=F, eval=T, message = FALSE, fig.pos = 'H')
 require(ggplot2)
 require(moments)
-AfrPlots <- read.csv("AfrPlots.csv")
-epa <-read.csv("epa2012.csv")
-
 ```
 
 <!-- sample code chunks included for problems, add or remove any code chunks or change the settings -->
 
 ## Problem 1
 
+### `myqqplot` function
 
-###``myqqplot`` function:
 ```{r myqqplot, echo=TRUE}
 #my qqplot function
 
-
+myqqplot <- function(c){
+  d <- sort(c)
+  n <- length(d)
+  
+  p <- numeric(n)
+  qZ <- numeric(n)
+  
+  for (i in 1:n){
+    p[i] <- (i - 0.5)/n
+    qZ[i] <- qnorm(p[i], mean = 0, sd = 1)
+  }
+  
+  i1 <- 0.25 * n + 0.5
+  i2 <- 0.75 * n + 0.5
+  x1 <- qZ[i1]
+  x2 <- qZ[i2]
+  y1 <- d[i1]
+  y2 <- d[i2]
+  
+  m <- (y2-y1)/(x2-x1)
+  b <- y2 - m*x2
+  
+  
+  fig <- plot (qZ, d, xlab = "Theoretical quantiles", ylab = "Sample values") + abline(b, m)
+  return(fig)
+}
 ```
 
+### (a) `qqplot` generated using `myqqplot` function:
 
-###(a) ``qqplot`` generated using ``myqqplot`` function:
-  
-  
-```{r problem1a, fig.align='center', fig.cap="\\label{fig:figs}caption", out.width='60%'}
+```{r problem1a, fig.align='center', fig.cap="\\label{fig:figs}Problem 1a", out.width='60%'}
 # Problem 1 (a) 
+AfrPlots <- read.csv("labs/lab4 Confidence Intervals/AfrPlots.csv")
+df1 <- subset(AfrPlots, AfrPlots$CensusNo == 2)
 
+myqqplot(df1$Dead)
 ```
-  
-  
-###(b) ``qqplot`` generated using ``qqnorm`` and ``qqline``:
 
-```{r problem1b, fig.cap="\\label{fig:figs}caption", out.width='60%', fig.align='center'}
+### (b) `qqplot` generated using `qqnorm` and `qqline`:
+
+```{r problem1b, fig.cap="\\label{fig:figs}Problem 1b", out.width='60%', fig.align='center'}
 # Problem 1 (b) 
 
+qqnorm(df1$Dead, las=1, main ="")
+qqline(df1$Dead)
 
+# my q-q plot look the same as that produced by qqnorm
 ```
+
+Processing summary of my qqplot: at first we should understand the meaning of x and y axis. If we do not want to calculate Z scores of the original data to standardize the graph (making the y values also distributed in the interval around (-2,2)), the y values should just be the original observation values.
+
+As for the calculation of x values, we should first find their linkages to y values, which is that they share the same percentile value. Thus, we should find the percentile of each observation by sorting and using the formula (i - 0.5)/n. Then, according to the corresponding percentile, we are able to calculate theoretical quantiles as the x values for the standardized normal distribution. And the -0.5 in the formula is applied to avoid the mismatch of 100% percentile which is infinity in the normal distribution.
 
 \newpage
 
 ## Problem 2
 
+### (a)
 
-### (a) 
-
-```{r problem2a, fig.cap="\\label{fig:figs}caption", out.width='70%', message=FALSE, fig.align='center'}
+```{r problem2a, fig.cap="\\label{fig:figs}Density Histogram", out.width='70%', message=FALSE, fig.align='center'}
 # Problem 2 (a) 
+epa <- read.csv("labs/lab4 Confidence Intervals/epa2012.csv")
+data <- epa$hwy_mpg
 
-
+# visualization
+ggplot(data.frame(data), aes(x=data)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+  colour="white", fill = "blue", alpha = 0.7) +
+  geom_density(size = 1) + xlab("Highway Gas Mileage") + 
+  ylab("Density") + theme_bw()
 ```
 
-```{r problem2b, fig.cap="\\label{fig:figs}caption", out.width='60%', fig.align='center'}
+```{r problem2b, fig.cap="\\label{fig:figs}Q-Q plot", out.width='60%', fig.align='center'}
 # Problem 2 (b) 
-
-
+ggplot(data.frame(data), aes(sample=data)) +
+stat_qq() + stat_qq_line() +
+ylab("Sample quantiles") + xlab("Theoretical quantiles") + theme_bw()
 ```
 
-```{r problem2c, fig.cap="\\label{fig:figs}caption", out.width="60%", fig.align='center'}
+```{r problem2c, fig.cap="\\label{fig:figs}boxplot", out.width="60%", fig.align='center'}
 # Problem 2 (c) 
-
+ggplot(data.frame(data), aes(x = data, y = "")) + 
+  stat_boxplot(geom = "errorbar", width = 0.15, color = 1) + 
+  geom_boxplot(fill = "blue", alpha = 0.5, color = 1, outlier.colour = 2) + 
+  xlab("Highway Gas Mileage") + 
+  ylab("") + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme_bw()
 ```
-
 
 ```{r problem2d}
 # Problem 2 (d)
 
+skewness <- function(y) {
+  n <- length(y)
+  skew <- 1/(n*sd(y)^3)*sum((y-mean(y))^3)
+  return(skew)
+}
+
+kurtosis <- function(y) {
+    n <- length(y)
+    kurt <- 1 / (n * sd(y) ^ 4) * sum((y - mean(y, na.rm = TRUE)) ^ 4) - 3
+    kurt
+}
+
+ans1 <- skewness(data)
+
+ans2 <- kurtosis(data)
+
+print(paste("The skewness is", ans1))
+print(paste("The kurtosis is", ans2))
 ```
-  
 
-### (b) 
+### (b)
 
-```{r problem2alog, fig.align='center', fig.cap="\\label{fig:figs}caption",out.width='70%'}
+```{r problem2alog, fig.align='center', fig.cap="\\label{fig:figs}Logarithmic Dencity Histogram",out.width='70%'}
 # Problem 2 (a --- log) 
+log_da <- log(data)
 
+ggplot(data.frame(log_da), aes(x=log_da)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+  colour="white", fill = "blue", alpha = 0.7) +
+  geom_density(size = 1) + xlab("Highway Gas Mileage") + 
+  ylab("Density") + theme_bw()
 ```
 
-```{r problem2blog, fig.align='center', fig.cap="\\label{fig:figs}caption",out.width='60%'}
+```{r problem2blog, fig.align='center', fig.cap="\\label{fig:figs}Logarithmic Q-Q Plot",out.width='60%'}
 # Problem 2 (b --- log) 
-
-
+ggplot(data.frame(log_da), aes(sample=log_da)) +
+stat_qq() + stat_qq_line() +
+ylab("Sample quantiles") + xlab("Theoretical quantiles") + theme_bw()
 ```
 
-```{r problem2clog, fig.align='center', fig.cap="\\label{fig:figs}caption",out.width='60%'}
+```{r problem2clog, fig.align='center', fig.cap="\\label{fig:figs}Logarithmic Boxplot",out.width='60%'}
 # Problem 2 (c --- log) 
-
-
+ggplot(data.frame(log_da), aes(x = log_da, y = "")) + 
+  stat_boxplot(geom = "errorbar", width = 0.15, color = 1) + 
+  geom_boxplot(fill = "blue", alpha = 0.5, color = 1, outlier.colour = 2) + 
+  xlab("Highway Gas Mileage") + 
+  ylab("") + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme_bw()
 ```
 
-
-```{r problem2dlog, include=FALSE}
+```{r problem2dlog}
 # Problem 2 (d --- log) 
+ans3 <- skewness(log_da)
 
+ans4 <- kurtosis(log_da)
+
+print(paste("The skewness is", ans3))
+print(paste("The kurtosis is", ans4))
 ```
 
 ### (c) Conclusion
 
+The log-transformed data looks more normally distributed
+
 ```{r problem2conclusion}
 # Problem 2 (conclusion) 
 
+# Mean
+mean <- mean(log_da)
+
+# CIs
+z_c <- qnorm(0.975, mean = 0, sd = 1)
+low_x <- mean - z_c*sd(log_da)/sqrt(length(log_da))
+up_x <- mean + z_c*sd(log_da)/sqrt(length(log_da))
+
+print (paste("The mean is", mean))
+print (paste("THe CIs is (", low_x, ",", up_x, ")"))
 ```
-
-
 
 \newpage
-<!-- *** -->
-<!-- Uncomment this section if you want to use an Appendix -->
 
-<!-- 
-## Appendix
+```{r}
+labs = knitr::all_labels()
+labs = setdiff(labs, c("setup", "get-labels"))
 
-```{r ref.label=knitr::all_labels(), eval=F, echo=T, message=FALSE, warning=FALSE}
 ```
--->

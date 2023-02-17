@@ -1,0 +1,73 @@
+---
+title: "2.13 hypothesis test"
+author: "Jiahuan Li"
+date: "2023-02-13"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# one tail test, alpha = 0.05
+Z_crit = qnorm (p = 0.05, 0, 1, lower.tail = F)
+# 1.64 that is the value of critical Z
+
+# two tails test, alpha = 0.05
+Z_crit2 = qnorm (p = 0.025, 0, 1, lower.tail = F)
+
+# calculate p-value (with n = 30, don't use t test (n-1), use the z value instead)
+set.seed(999)
+unvacc = rpois(n = 30, lambda = 3)
+mean = mean(unvacc)
+sd = sd(unvacc)
+
+# actual Z score get from real data, then compared to the Z distribution
+Z = (mean - 0) / (sd / n)
+pnorm(q = 2.9, mean = 0, sd = 1.69/sqrt(30), lower.tail = F)
+
+# if Z_true (for population distribution)= 1.7. compare to different critical Z, it will be in the critical zone of the one tail test, but does not in the zone of two-tail test
+
+# p value is the same and does not change according to hypotheses H1 or H2. But the critical Z will change according to different hypotheses conditions
+```
+
+one sample test: have one sample data two sample test: data from two samples and comparison
+
+Assumption: independent; normally distributed/ two samples: approximately variance
+
+pair test: measure the sample at different time (today/ after year obs of the same sample)
+
+## t test
+
+it is a one sample (compare to a value), one-sided (larger than) test
+
+```{r}
+## small sample size
+sal = c(0.593, 0.142, 0.329, 0.691, 0.231, 0.793, 0.519, 0.392, 0.418)
+t.test (x = sal, mu = 0.3, alternative = "greater")
+```
+
+conclusion: significant greater
+
+t-value, df, mean should be reported in paper. only the p-value is not enough
+
+##### what is the H0 in this situation? no greater than? not just unequal? link to the quiz error?
+
+check on Wed
+
+### t test 2-sample test
+
+```{r}
+cont = c(95, 94, 99, 96, 95, 96)
+treat = c(101, 98, 100, 97, 99, 99)
+
+# compare the cont (y) to the treat (x)? less means y < x?
+## but it does not consist with the format of one-sample test?
+
+t.test(x= treat, y = cont, alternative = "less")
+
+# the below one hypo is correct
+t.test(x= treat, y = cont, alternative = "greater")
+# final answer: reject the h0, the hypothesis is true
+```

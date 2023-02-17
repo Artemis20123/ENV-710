@@ -1,0 +1,111 @@
+### Two sample tests
+
+placebo (treatment & control): two sample, 1-sided
+
+### Test hyphothesis hold or not: normality & equal variance
+
+```{r}
+cont = c(95, 94, 99, 96, 95, 96)
+
+## test assumption: normality & equal variance
+## H0 the data is normally distributed
+## p-value: to reject the H0. 21% means cannot reject (p for wrong rejection)
+shapiro.test(cont)
+```
+
+F test for equal variance: H0: their vars are equal
+
+p = 0.67, is wrongly rejected H0, thus, the sds are equal
+
+from the boxplot, look at the length/width of the two plots, they reflect the variance
+
+### two sample test Result
+
+one-side test: CI only has one number, the other side is infinity
+
+t value 3.4 shown on the picture as red part
+
+**degree of freedom for t test: -2 because means of two sample groups**
+
+**df for CI: -1 because calculated for one group?**
+
+### Mice
+
+pair t test **(but n \>30?)**
+
+H0: there is no difference
+
+two tail test
+
+assumption: normality. **no variance requirement since there are the same sample at different time**
+
+only focus on the change, thus, 1 sample, df = 39
+
+```{r}
+## test the normality of the difference of the weight (after-before)
+mice_dt = read.csv("class notes/mice_dt.csv")
+mice_diff = with(mice_dt, af_dat - bf_dat)
+
+with(mice_dt, t.test(bf_dat, af_dat, paired = T))
+## the t-test can also be runned as a one-sample t-test and compared to 0
+
+```
+
+**with() function usage?**
+
+## Type1 2 errors
+
+focusing on the definitions
+
+```{r}
+# type 1 error (need to ensure this)
+alpha = 0.05
+
+# find quantile
+qnorm(p = 0.95, mean = 0, sd = 0.4)
+
+# type 2 error
+beta = pnorm(0.66, 1, 0.4)
+power = pnorm(0.66, 1, 0.4, lower.tail = F)
+
+# power = 1-beta
+```
+
+## River
+
+```{r}
+
+river = read.csv("class notes/River_pH.csv")
+
+rivA = river$pH[river$River_name == "A"]
+rivB = river$pH[river$River_name == "B"]
+
+# test the similarity of the sds
+ratio = sd(rivA) / sd(rivB)
+## or
+var.test(rivA, rivB, alternative = "two.sided")
+## conclusion: no significant difference, assumption holds
+
+# t test
+t.test(rivA, rivB, var.equal = T, alternative = "two.sided")
+```
+
+```{r}
+t.test(rivA, rivB, var.equal = T, alternative = "g")
+
+# how to calculate the CIs for the two sample tests?
+```
+
+```{r}
+## assume A and B are paired tests (assume sd the same, only test normality)
+# one sample (df = 9) 1 sided
+
+t.test(rivB, rivA, paired = T, alternative = "l")
+
+# or
+t.test(river$pH ~ river$River_name, paired = "T", alternative = "greater")
+```
+
+```{r}
+t.test(river$pH, mu = 7, alternative = "g")
+```
