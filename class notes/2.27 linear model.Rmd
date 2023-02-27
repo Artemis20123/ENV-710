@@ -1,0 +1,37 @@
+SSR SST SSE
+
+```{r car}
+data("cars")
+lm = lm(dist ~ speed,data = cars)
+summary(lm)
+summary.aov(lm)
+plot(lm)
+
+# effect size = slope value = 3.9
+# 0 hypothesis: the slope is 0
+# degrees of freedom? n-2 instead of n-1? since it is shown in the result
+
+# install.packages("GGally")
+library(GGally)
+GGally::ggpairs (cars)
+
+
+```
+
+```{r covid}
+covid = read.csv("data/covid.csv")
+
+cvd0 = with(covid, lm(deaths.100k ~ cases.100k))
+summary(cvd0)
+plot(cvd0)
+
+# log transform the data
+cvd = with(covid, lm(log(deaths.100k + 1) ~ cases.100k))
+summary(cvd)
+plot(cvd)
+
+# why exp?
+exp(coef(cvd))
+
+GGally::ggpairs (covid, columns = 3:4)
+```
