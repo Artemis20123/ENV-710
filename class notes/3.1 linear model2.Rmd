@@ -1,0 +1,100 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+### plant growth
+
+null-hypothesis: A has no effect on B
+
+q: ddl; can change or not; dataset in R; other model: iv etc? template for abstract?
+
+```{r}
+library(ggplot2)
+library(GGally)
+data("PlantGrowth")
+
+ggpairs(PlantGrowth, ggplot2::aes(color = factor(PlantGrowth$group)))
+
+# top left: density plot of each group??
+# bottom left?
+```
+
+```{r}
+
+# error reported
+df = as.data.frame(PlantGrowth)
+p1 <- lm(weight ~ factor(group), data = df)
+
+summary.aov(p1)
+summary(p1)
+
+# intersect: control? p<0.05: the weight y is different than 0.
+# tr1 is not different from the control
+# how to know ctrl group is the control? location in the column?
+# adjust R: the percentage of y change can be explained by x change
+
+# overall p-value 0.015: the entire model is significant
+```
+
+```{r}
+par(mfow = c(2,2)); plot(p1)
+
+# continous data(previous) at this time, the scater data are in three groups
+```
+
+```{r}
+tuk = TukeyHSD(aov(p1))
+tuk
+plot(tuk)
+
+# type 1 error?
+# p-adjused due to multiple comparisons
+# see the CIs for the group differences include 0 or not. if not, eg. tr2-tr1, means their difference is significant
+
+# first, the model should be significant shown above.
+# then, use tuk to consider the interaction between treatments
+## sig difference among treatments (F2,27 = 4.85, p =0.015)
+## difference among tr1 and tr2 (even more specific)
+```
+
+### AGB
+
+why can the residuals used to validate the assumptions? (I think it is slope that reflect the relation between x and y)
+
+exist one group different from 0?
+
+```{r}
+
+adat = read.csv("data/adat.csv")
+
+# this does not show the boxplot in the upper right
+ggpairs(adat, columns = 3:4, ggplot2::aes(color = factor(ForestType)))
+
+ggplot(adat, aes(y = AGB, x = as.factor(ForestType))) + geom_boxplot()
+```
+
+```{r}
+p2 <- lm(AGB ~ factor(ForestType), data = adat)
+
+summary.aov(p2)
+summary(p2)
+# higher slope value, less p-value, more significant
+
+par(mfow = c(2,2)); plot(p2)
+
+tuk2 = TukeyHSD(aov(p2))
+tuk2
+plot(tuk2)
+```
+
+```{r}
+# valid model assumptions
+## why test residuals only? that is, why it is important and can explain the assumption
+
+## the teacher does not suggest to use these tests? why?
+bartlett.test(resid(p2) ~ ForestType, data = adat)
+
+shapiro.test(resid(p2))
+```
