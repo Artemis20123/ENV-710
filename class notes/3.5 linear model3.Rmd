@@ -1,0 +1,41 @@
+---
+title: "3.5 linear model3"
+author: "Jiahuan Li"
+date: "2023-03-06"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+pacman::p_load(ggplot2, car, GGally)
+```
+
+```{r gas}
+gas <- read.csv("data/epa-gas.csv", header = T, stringsAsFactors = T)
+
+#gas$Cyl = as.factor(gas$Cyl)
+# you can see the difference between the figures for the cyl column as continuous numeric and factor column, respectively.
+
+ggpairs(gas, columns = c(3, 5, 6, 18))
+# figures show the correlation between variables? multi types for each var
+summary(gas)
+```
+
+```{r}
+model <- lm(City.MPG ~ factor(Fuel) + factor(Drive) + Cyl + Comb.CO2, data = gas)
+# this command can show the class of all the columns
+sapply(gas, class)
+
+summary(model)
+# intercept means: result of all numeric vars as 0.how about the cata ones?
+# how to know the default setting? see the rowname. the missing one is default
+# p-value of each var means?
+
+vif(model)
+
+model2 <- lm(log(City.MPG) ~ factor(Fuel) + factor(Drive) + Cyl + Comb.CO2, data = gas)
+par(mfrow = c(2,2), plot(model2))
+# after validate the p-value of the model, test the correlation between each Xs.
+TukeyHSD(aov(model))
+```
