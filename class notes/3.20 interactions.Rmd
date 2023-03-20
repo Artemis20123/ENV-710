@@ -1,0 +1,103 @@
+## Height & Education
+
+```{r}
+ht <- read.csv("data/ht.dat-1.csv")
+
+# model with just main effects
+m1 <- lm(earn ~ height + ed, data = ht)
+
+
+# model with interaction
+m2 <- lm(earn ~ height * ed, data = ht)
+```
+
+Interaction model:
+
+y = a0 + a1x1 + a2x2 + a3x1x2
+
+Interaction: the effect of height on earnings depended on education & that of edu on earn depent on height
+
+```{r}
+# which model is better?
+AIC(m1, m2)
+# AIC number for m1 is smaller, thus, better
+# 更常见的方法
+
+# F-test (需要复习)
+anova(m1, m2)
+
+# to see each step
+step(m2)
+
+#但是我觉得后一个模型虽然解释效果更好，但是它每一项的参数都不特别显著啊，感觉这些参数用不出去
+```
+
+If the interaction is wanted to be kept, the vars that construct the interaction should be kept in the equation
+
+解释interaction item的实际含义？
+
+```{r}
+# 如何理解这几张图？
+plot(m2)
+
+# Residual & Fitted: expected the points destributed to be a random cloud. It should not be clustered somewhere.
+# Scale & location: similar expectation with the first graph
+# Residuals & leverage: should not be points above the 0.5 line, which indicates their large leverage to th regression result. The points with numbers indicating their rows (record)
+```
+
+```{r}
+# according to pictures above, log-transform the dept var
+# usually transform the dept var only. And then consider transforming indpt vars
+m2.log <- lm(log(earn) ~ height*ed, data = ht)
+
+summary(m2.log)
+plot(m2.log)
+```
+
+```{r salary prediction}
+# 10 years edu & 70 inches tall
+c.ht <- coef(m2)
+salary1 <- c.ht[1] + c.ht[2] * 70 + 10 *c.ht[3] + c.ht[4] * 10 * 70
+
+# average edu & 72 inches tall
+salary2 <- 38433.60 - 744.22 * 72 -6699.50*mean(ht$ed) + 138.16 *mean(ht$ed)*72
+
+# predict function
+## create a dataframe and then predict
+val <- data.frame(ed = c(10, mean(ht$ed)), height = c(70,72))
+predict(m2, val, interval = "confidence", level = 0.95)
+```
+
+```{r interaction "height X ed" plot}
+# plot the relation of earning & height with different levels of educations (10, 13, 17 years)
+# how about plot 3D layers? 应该线会变成一个平面?
+# 随着height增加，不同edu level的线之间的间距增加，这是interaction coefficient是正值的体现吗？
+```
+
+main effect model: the gaps between lines are identical. lines are parallel
+
+with interactions: lines are not parallel. the slope of lines will change
+
+## Center & scale the indpt vars
+
+center 意思是选用新的baseline. intercept 不再是ed = 0 & height =0的情形，而是选用mean value作为intercept基准
+
+```{r center}
+# 计算每个值和平均值的差距
+ht$height.c <- ht$height - mean(ht$height)
+ht$ed.c <- ht$ed - mean(ht$ed)
+
+# change the scale, no coefficient change
+m.c1 <- lm(earn ~ height.c + ed.c, data = ht)
+summary(m.c1)
+
+m.c2 <- lm(earn ~ height.c*ed.c, data = ht)
+summary(m.c2)
+# why the coefficients are significant here?
+
+AIC(m.c1,m.c2)
+anova(m.c1, m.c2)
+# how to explain anova results?
+```
+
+the parameter, the fit, and the choice of best model will not be influenced by centering
