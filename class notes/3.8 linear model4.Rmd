@@ -1,0 +1,38 @@
+---
+title: "3.8 linear model4"
+author: "Jiahuan Li"
+date: "2023-03-08"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## EPA gas standards
+
+change the categorical variables only cause changes in the intercept (they do not influence the x)
+
+about the log-transforms? (do not catch the key points) it is useful since it makes the relationship linear?
+
+the log transform does not change the squared R
+
+## Model selection
+
+comparison limits:
+
+1.  the models should based on the same dataset
+2.  should not compare the log-transformed models to not transformed ones.
+
+```{r}
+kid <- read.csv("data/kidiq-1.csv")
+model <- lm(kid.score ~ factor(mom.hs) + mom.iq + mom.age + factor(mom.work), kid)
+# intercept: hs = 0, work = 1, iq = 0 (continuous variable)
+summary(model)
+
+step(model)
+# additional to the step(), the process can also be done mannually. 
+# Remove all the insignificant independent variables (only refer to the p-value, do not consider the squared-R). And run the new model (update the model step by step)
+# keep hs and iq only
+# the R-squared won't change a lot, meaning removing the vars do not matter
+```
