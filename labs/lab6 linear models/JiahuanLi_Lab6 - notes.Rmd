@@ -23,31 +23,26 @@ library(here)
 tdat <- read.csv(file = here("labs/lab6 linear models/TreePlots_Lab6.csv"), header = TRUE)
 
 lm1 <- lm(AGBH.Mg.ha ~ mDBH.cm, data = tdat)
+
+# ANOVA provides information on the significance of the predictor variable and the overall fit of the model
+anova(lm1)
+
+
+
+sd(tdat$AGBH.Mg.ha)
 summary(lm1)
+# lm1$fitted.values
 ```
 
-### Result analysis
+### Regression analysis
 
-polish the paragraph in a more concise and academic way "Looking at the ANOVA printout, the small p-value (3.6e-11) for the F-test for the predictor variable (mean tree diameter) tells us that our regression model explains a significant part of the variation in the data (more than the null model with just the intercept).
-The results demonstrate that the linear regression model was significant (R2 = 0.386, F1,71 = 46.34, p \< 0.001). The R-squared value of 0.47 indicates that 47% of the variation in plot biomass can be explained by mean tree diameter."
+-   **`F value`**: This column shows the F-statistic for the predictor variable, which is calculated as the ratio of the MSS for the predictor variable to the MSS for the residual.
 
-### Model **Interpretation**
+-   **`Pr(>F)`**: This column shows the p-value for the F-test for the predictor variable. This p-value represents the probability of obtaining an F-value as extreme as the one observed if the null hypothesis (i.e., no association between the predictor and response variables) were true. A p-value less than the significance level (typically 0.05) indicates that the predictor variable is significantly associated with the response variable.
 
-For the above example, we might say: average tree height in forest plots significantly increases plot-level
+Let's start at the very bottom of the results printout and look at the ANOVA printout. The small p-value tells us that our regression model explains a significant part of the variation in the data (more than the null model with just the intercept). It tests our alternative hypothesis (tree height is related to biomass; H1 : 1 6= 0) against the null hypothesis (tree height has no effect on biomass; H0 : 1 = 0), and demonstrates that by incorporating tree height we can explain a significant part of the variation in above ground biomass, Yi.
 
-biomass, with a 1 m increase in average tree height resulting in a 45.70 Mg ha-1 increase in plot biomass
-
-(R2 = 0.386, F1,71 = 46.34, p \< 0.001).
-
-In some cases, you may want to present the entire equation: average forest biomass is significantly related to average tree height (biomass = −499.9 + 45.70 × height, R2 = 0.386, F1,71 = 46.34, p \< 0.001
-
-Interpretation of regression model:
-
-The equation of the linear regression model is:
-
-AGBH.Mg.ha = 0.001\*mDBH.cm + 0.05
-
-This means that for every 1 cm increase in mean tree diameter, plot biomass increases by 0.001 Mg/ha, on average. The intercept of 0.05 indicates that for a plot with a mean tree diameter of 0 cm, the predicted plot biomass is 0.05 Mg/ha.
+The linear regression model was significant (F(1,97)=85.61, p\<0.001), with an R-squared value of 0.47. This indicates that 47% of the variation in plot biomass can be explained by mean tree diameter.
 
 Because the coefficient, mH.m, is positive the model predicts that aboveground biomass will increase as tree height increases. Every meter in additional height will lead to a 45.70 Mg ha-1 increase in biomass.
 
@@ -55,7 +50,13 @@ The intercept in this model is not interpretable. Technically it represents the 
 
 The rest of the display includes the standard deviation of the estimates, and the t statistic and corresponding p-value for the null hypothesis that the true value of each coefficient is 0. The individual t-tests are variable-added-last tests. They test whether the coefficient of the given variable is significantly different from 0, in the context of a model that already contains the rest of the independent variables. These tests are not tests of the importance of a variable by itself, but only in the context of the rest of the model. More about this when we discuss whether to include a variable in a model or not.
 
-average tree height in forest plots significantly increases plot-level biomass, with a 1 m increase in average tree height resulting in a 45.70 Mg ha-1 increase in plot biomass (R2 = 0.386, F1,71 = 46.34, p \< 0.001).
+### Result conclusion
+
+For the above example, we might say: average tree height in forest plots significantly increases plot-level
+
+biomass, with a 1 m increase in average tree height resulting in a 45.70 Mg ha-1 increase in plot biomass
+
+(R2 = 0.386, F1,71 = 46.34, p \< 0.001).
 
 In some cases, you may want to present the entire equation: average forest biomass is significantly related to average tree height (biomass = −499.9 + 45.70 × height, R2 = 0.386, F1,71 = 46.34, p \< 0.001
 
