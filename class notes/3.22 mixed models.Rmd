@@ -1,0 +1,77 @@
+fixed/ random effects:
+
+-   focusing on the C/N nutrients or all the groups of nutrients
+
+-   treating the dataset as the whole population or a sample of the true population
+
+```{r}
+# install.packages("MuMln")
+```
+
+## Sleep study
+
+```{r}
+require(lme4)
+data("sleepstudy")
+ss <- force(sleepstudy)
+
+# 0-2 days are control groups
+ss.test <- ss[ss$Day >2, ]
+
+# pooled model - no effect of subject
+lm.1 <- lm(Reaction ~ Days, data = ss.test)
+# summary(lm.1)
+## how can he illustrate like that?
+library(ggplot2)
+ggplot(ss.test, aes(x = Days, y = Reaction)) + geom_point()
+
+# unpooled model - subject treated as a factor
+## the below 2 yield same output
+lm.2.1 <- lm(Reaction ~ Days + Subject, data = ss.test)
+# summary(lm.2.1)
+lm.2 <- lm(Reaction ~ Days + as.factor(Subject), data = ss.test)
+# summary(lm.2)
+
+# unpooled model - interaction (the R^2 always improved)
+lm.3 <- lm(Reaction ~ Days * Subject, data = ss.test)
+# summary(lm.3)
+
+# random effect model - varying intercept model
+## "1|subject" means the intercept varys according to subject
+## not allow the slope to vary
+## instead of comparing to a existing subject (subject308), in RE model, it compares to a mean subject
+
+lm.4 <- lmer(Reaction ~ Days + (1|Subject), ss.test)
+summary(lm.4)
+# effect size of subject on reaction: std.dev = 45.25
+# how to interpret the report?
+# it reports the variations caused by subject changes
+# what can we conclude from the report?
+
+# to find the p value
+lmer.Test(lm.4)
+# the function does not work?
+# Is the interaction effect considered in this model?
+```
+
+```{r}
+# varying intercept/slope model
+## subject is allowed to vary by days (allow slope to change with individuals)
+lm.5 <- lmer(Reaction ~ Days + (1 + Days|Subject), ss.test)
+## warning message: need to center/scaling??
+
+summary(lm.5)
+## the report shows the impacts of changeing subjects. Thus, we can consider the impacts of applying the model to a whole population
+## how to evaluate the output?
+## how to apply the RE model to make predictions with a true population?
+
+library(MuMln)
+# a way to import multiple packages:
+# pacman::p_load(MuMln, sleepstudy)
+r.squaredGLMM(lm.5)
+# R2m: main effect; R2c: random effect
+```
+
+```{r model evaluation}
+AIC(lm.1,lm.2,lm.3,lm.4,lm.5)
+```

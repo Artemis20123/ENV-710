@@ -101,3 +101,5 @@ anova(m.c1, m.c2)
 ```
 
 the parameter, the fit, and the choice of best model will not be influenced by centering
+
+center 以后，x1和x2的系数会变化，但是交互项的系数不变，那是我们关心的

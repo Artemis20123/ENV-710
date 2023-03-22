@@ -1,11 +1,16 @@
 ---
 title: 'ENV 710: Lab 6'
-author: "Jiahuan Li" 
+author: "Jiahuan Li"
 date: "Spring 2023"
-output: 
+output:
   pdf_document:
-    toc: TRUE
+    toc: yes
+  html_document:
+    toc: yes
+    df_print: paged
 ---
+
+\newpage
 
 ## Problem 1
 
@@ -17,7 +22,7 @@ While the alternative hypothesis ($H_1$) is that there is a linear relationship 
 
 ### Regression model
 
-```{r Problem1 regression}
+```{r Problem1 regression, message=FALSE}
 
 library(here)
 tdat <- read.csv(file = here("labs/lab6 linear models/TreePlots_Lab6.csv"), header = TRUE)
@@ -28,47 +33,193 @@ summary(lm1)
 
 ### Result analysis
 
-polish the paragraph in a more concise and academic way "Looking at the ANOVA printout, the small p-value (3.6e-11) for the F-test for the predictor variable (mean tree diameter) tells us that our regression model explains a significant part of the variation in the data (more than the null model with just the intercept).
-The results demonstrate that the linear regression model was significant (R2 = 0.386, F1,71 = 46.34, p \< 0.001). The R-squared value of 0.47 indicates that 47% of the variation in plot biomass can be explained by mean tree diameter."
+The ANOVA printout reveals that the F-test for the predictor variable, mean tree diameter, yielded a small p-value (3.6e-11), indicating that the regression model accounts for a substantial portion of the variation in the data compared to the null model with only the intercept.
+
+The statistical analysis further confirms the significance of the linear regression model ($R^2$ = 0.4599, $F_{1,70}$ = 61.47, $p$ \< 0.001). The R-squared value of 0.46 demonstrates that the mean tree diameter explains 46% of the variation in plot biomass.
 
 ### Model **Interpretation**
 
-For the above example, we might say: average tree height in forest plots significantly increases plot-level
-
-biomass, with a 1 m increase in average tree height resulting in a 45.70 Mg ha-1 increase in plot biomass
-
-(R2 = 0.386, F1,71 = 46.34, p \< 0.001).
-
-In some cases, you may want to present the entire equation: average forest biomass is significantly related to average tree height (biomass = −499.9 + 45.70 × height, R2 = 0.386, F1,71 = 46.34, p \< 0.001
-
-Interpretation of regression model:
+The regression results imply that the average tree diameter in forest plots significantly increases plot-level biomass, with a 1 cm increase in diameter resulting in a 29.114 Mg ha-1 increase in plot biomass ($R^2$ = 0.4599, $F_{1,70}$ = 61.47, $p$ \< 0.001).
 
 The equation of the linear regression model is:
 
-AGBH.Mg.ha = 0.001\*mDBH.cm + 0.05
+$biomass = -406.186 +29.114 * diameter$
 
-This means that for every 1 cm increase in mean tree diameter, plot biomass increases by 0.001 Mg/ha, on average. The intercept of 0.05 indicates that for a plot with a mean tree diameter of 0 cm, the predicted plot biomass is 0.05 Mg/ha.
-
-Because the coefficient, mH.m, is positive the model predicts that aboveground biomass will increase as tree height increases. Every meter in additional height will lead to a 45.70 Mg ha-1 increase in biomass.
-
-The intercept in this model is not interpretable. Technically it represents the biomass of a plot when the average height of trees is 0. The model predicts a negative biomass when trees have a height of 0, which is nonsensical. In discussing the intercept we are extrapolating beyond the range of data that are possible, one of the no-no's in regression analysis.
-
-The rest of the display includes the standard deviation of the estimates, and the t statistic and corresponding p-value for the null hypothesis that the true value of each coefficient is 0. The individual t-tests are variable-added-last tests. They test whether the coefficient of the given variable is significantly different from 0, in the context of a model that already contains the rest of the independent variables. These tests are not tests of the importance of a variable by itself, but only in the context of the rest of the model. More about this when we discuss whether to include a variable in a model or not.
-
-average tree height in forest plots significantly increases plot-level biomass, with a 1 m increase in average tree height resulting in a 45.70 Mg ha-1 increase in plot biomass (R2 = 0.386, F1,71 = 46.34, p \< 0.001).
-
-In some cases, you may want to present the entire equation: average forest biomass is significantly related to average tree height (biomass = −499.9 + 45.70 × height, R2 = 0.386, F1,71 = 46.34, p \< 0.001
+The intercept in this model is not interpretable since it pertains to a scenario outside the feasible range of the data.
 
 ### Model assumptions checking
 
-In the diagnostic plots for our model, both the Scale-Location and Residuals vs. Leverage plots show points scattered away from the center, suggesting that some points have excessive leverage. Another pattern is that points 25, 43, and 63 stick out in nearly every plot. This warns us that something could be odd with those observations. We might want to redo the analysis without those points (tree plots) and see if our inference changes.
+The assumptions of the linear regression model are checked by examining the residual plots for normality, constant variance, and linearity.
 
 ```{r}
-dukeblue <- "#001A57"
+par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
+plot(lm1)
+```
 
-with(tdat, plot(mH.m, AGBH.Mg.ha, lwd = 2, las = 1, pch = 19,
-  col = "grey", cex = 1, xlab = "Mean height, m",
-  ylab = expression(paste("Biomass Mg ", haˆ-1))))
+In the diagnostic plots for our model,
 
-with(tdat, abline(lm(AGBH.Mg.ha ~ mH.m), col = dukeblue, lwd = 2))
+-   Residuals vs. Fitted: looks good as points are randomly scattered around the center line;
+
+-   Normal Q-Q: the data generally fits the straight line but with outliers (points 43, 51, 62);
+
+-   Scale-Location: points 43, 51 and 62 scattered away from the center suggesting their excessive leverage;
+
+-   Residuals vs. Leverage: the potential trouble points 21, 43, and 51 are labelled considering their bigger effects on the parameter estimate compared to other points.
+
+According to the plots, points 43, 51, and 62 could be odd observations. Thus, the analysis could be redone without those points (tree plots) to assess if the inference changes.
+
+```{r}
+lm1.c <- with(tdat[-c(43,51,62), ], lm(AGBH.Mg.ha ~ mDBH.cm))
+summary(lm1.c)$r.squared
+coef(lm1.c)
+```
+
+The adjustment may be appropariate because removing those observations enhances the $R^2$ value and does not significantly alter the parameter estimates.
+
+### Visualization
+
+```{r, message=FALSE, warning=FALSE, fig.height=4,fig.width=6}
+require(ggplot2)
+tdat1 <- tdat[-c(43,51,62), ]
+ggplot(tdat1, aes(x = mDBH.cm, y = AGBH.Mg.ha)) +
+  geom_point(shape = 1) +
+  geom_smooth(method = lm) +
+  xlab("Mean diameter, cm") +
+  ylab(expression(paste("Biomass, Mg ", ha^-1))) +
+  theme_bw()
+```
+
+\newpage
+
+## Problem 2
+
+### Hypothesis
+
+The null hypothesis ($H_0$) of this test is that there is no linear relationship between mean tree height and mean wood density in the plots.
+
+While the alternative hypothesis ($H_1$) is that there is a linear relationship between the two variables mentioned above.
+
+### Regression model
+
+```{r Problem2 regression, message=FALSE}
+lm2 <- lm(mH.m ~ mWD.g.m3, data = tdat)
+summary(lm2)
+```
+
+### Result analysis
+
+The ANOVA printout reveals that the F-test for the predictor variable, mean wood density, yielded a small p-value (0.005438), indicating that the regression model accounts for a substantial portion of the variation in the data compared to the null model with only the intercept.
+
+The statistical analysis further confirms the significance of the linear regression model ($R^2$ = 0.09244, $F_{1,70}$ = 8.232, $p$ \< 0.01). The R-squared value of 0.092 demonstrates that the mean wood density explains 9.2% of the variation in the tree height.
+
+### Model **Interpretation**
+
+The regression results imply that the average wood density of forest plots significantly increases tree height, with per unit increase resulting in a 7.33 m increase in tree height ($R^2$ = 0.09244, $F_{1,70}$ = 8.232, $p$ \< 0.01).
+
+The equation of the linear regression model is:
+
+$height = 12.412 +7.33 * density$
+
+The intercept in this model means the height of the trees (12.412m) where the wood density of the plots is 0.
+
+### Model assumptions checking
+
+The assumptions of the linear regression model are checked by examining the residual plots for normality, constant variance, and linearity.
+
+```{r}
+par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
+plot(lm2)
+```
+
+Similar to the analysis in Problem 1, these plots indicate that points 21, 57, and 63 could be odd observations in this analysis. Thus, the analysis could be redone without those points (tree plots) to assess if the inference changes.
+
+```{r}
+lm2.c <- with(tdat[-c(21,57,63), ], lm(mH.m ~ mWD.g.m3))
+summary(lm2.c)$r.squared
+coef(lm2.c)
+```
+
+The adjustment may be appropariate because removing those observations enhances the $R^2$ value and does not significantly alter the parameter estimates.
+
+### Visualization
+
+```{r, message=FALSE, warning=FALSE, fig.height=4,fig.width=6}
+require(ggplot2)
+tdat2 <- tdat[-c(21,57,63), ]
+ggplot(tdat2, aes(x = mWD.g.m3, y = mH.m)) +
+  geom_point(shape = 1) +
+  geom_smooth(method = lm) +
+  xlab(expression(paste("Mean wood density, g/", m^3))) +
+  ylab("Mean height, m") +
+  theme_bw()
+```
+
+\newpage
+
+## Problem 3
+
+### Hypothesis
+
+The null hypothesis ($H_0$) of this test is that there is no linear relationship between animals' brain weight and body weight.
+
+While the alternative hypothesis ($H_1$) is that the brain weight increases with body weight for different animals.
+
+### Regression model
+
+```{r Problem3 regression, message=FALSE}
+df <- read.table(file = here("labs/lab6 linear models/Brain_Weight_Body_Weight.txt"), header = TRUE)
+
+lm3 <- lm(BrainWeight ~ BodyWeight, data = df)
+summary(lm3)
+```
+
+### Result analysis
+
+The ANOVA printout reveals that the F-test for the predictor variable, body weight, yielded a small p-value (\<2.2e-16), indicating that the regression model accounts for a substantial portion of the variation in the data compared to the null model with only the intercept.
+
+The statistical analysis further confirms the significance of the linear regression model ($R^2$ = 0.8705, $F_{1,60}$ = 411.2, $p$ \< 0.001). The R-squared value of 0.87 demonstrates that the body weight explains 87% of the variation in the brain weight.
+
+### Model **Interpretation**
+
+The regression results imply that the body weight of animals significantly increases their brain weight, with per unit increase resulting in a 0.90291 kg increase in the brain weight ($R^2$ = 0.8705, $F_{1,60}$ = 411.2, $p$ \< 0.001).
+
+The equation of the linear regression model is:
+
+$height = -56.8555 + 0.90291 * density$
+
+The intercept in this model is not interpretable since it pertains to a scenario outside the feasible range of the data.
+
+### Model assumptions checking
+
+The assumptions of the linear regression model are checked by examining the residual plots for normality, constant variance, and linearity.
+
+```{r}
+par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
+plot(lm3)
+```
+
+The plots shown above are not good. The banana shape indicates the potential of log transformation. Also from the common sense, the distribution of animals' weight is not even and has great variations. Thus, instead of viewing some points as outliers, I would rather take a log transformation and make them fit in that model.
+
+```{r}
+lm3.log <- lm(log(BrainWeight) ~ log(BodyWeight), data = df)
+par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
+plot(lm3.log)
+
+summary(lm3.log)$r.squared
+coef(lm3.log)
+```
+
+The adjustment may be appropariate because the log transformation enhances the $R^2$ value and does not significantly alter the parameter estimates.
+
+### Visualization
+
+```{r, message=FALSE, warning=FALSE, fig.height=4,fig.width=6}
+require(ggplot2)
+
+ggplot(df, aes(x = log(BodyWeight), y = log(BrainWeight))) +
+  geom_point(shape = 1) +
+  geom_smooth(method = lm) +
+  xlab("Log(body weight), kg") +
+  ylab("Log(brain weight), kg") +
+  theme_bw()
 ```
