@@ -13,10 +13,12 @@ The null hypothesis is that the mean plant growth is the same for each fertilize
 
 the alternative hypothesis that at least one of the means is different from one of the others.
 
+logged & hunted, logged only, and pristine forests all have the same mean biomass?
+
 ## Problem 2
 
-interaction plot 需要包含
+interaction plot needed
 
 treat as factor: box plot as each level
 
-turkeyHSD 不用全部解释，解释一部分即可
+turkeyHSD only need to partly explain
