@@ -1,0 +1,22 @@
+---
+title: 'ENV 710: Lab 7'
+author: "Jiahuan Li"
+date: "Spring 2023"
+output:
+  pdf_document:
+    df_print: paged
+---
+
+## Problem 1
+
+The null hypothesis is that the mean plant growth is the same for each fertilizer level versus
+
+the alternative hypothesis that at least one of the means is different from one of the others.
+
+## Problem 2
+
+interaction plot 需要包含
+
+treat as factor: box plot as each level
+
+turkeyHSD 不用全部解释，解释一部分即可

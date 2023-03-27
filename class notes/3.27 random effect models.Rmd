@@ -60,3 +60,5 @@ intro 1 page single-space academic paper format
 除非它们是nature of the experiment design e.g. plot, site
 
 temporal factors不一定是模型设计的一部分，因为有的实验并不关心temporal changes
+
+如果一个变量可能的值太少（subject less than 6），不能将其作为random effect variable
