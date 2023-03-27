@@ -59,16 +59,19 @@ lmer.Test(lm.4)
 ## subject is allowed to vary by days (allow slope to change with individuals)
 lm.5 <- lmer(Reaction ~ Days + (1 + Days|Subject), ss.test)
 ## warning message: need to center/scaling??
+## how to choose between lm.4 and lm.5?
 
 summary(lm.5)
 ## the report shows the impacts of changeing subjects. Thus, we can consider the impacts of applying the model to a whole population
 ## how to evaluate the output?
 ## how to apply the RE model to make predictions with a true population?
 
-library(MuMln)
+# install.packages("MuMIn")
+library(MuMIn)
 # a way to import multiple packages:
-# pacman::p_load(MuMln, sleepstudy)
-r.squaredGLMM(lm.5)
+# pacman::p_load(MuMIn, sleepstudy)
+
+MuMIn::r.squaredGLMM(lm.5)
 # R2m: main effect; R2c: random effect
 ```
 
