@@ -10,6 +10,7 @@ knitr:
 ```{r, message=FALSE, warning=FALSE}
 library(ggplot2)
 require(mosaic)
+library(agricolae)
 ```
 
 ## Problem 1
@@ -19,13 +20,13 @@ The null hypothesis is that the average weight of confiscated elephant tusks is 
 To test this hypothesis, we will use a one-way ANOVA design with the year as a factor because there is only one independent variable for this model. Besides, the number of the subjects in this situation is too small to conduct a random effect analysis. Thus, I construct the model as follows:
 
 ```{r}
-Tusk <- read.csv("labs/lab7 linear models with nominal explanatory variables/TuskData.csv")
+Tusk <- read.csv("TuskData.csv")
 
 lm1 <- lm(Tusk.kg ~ factor(Year), data = Tusk)
 summary(lm1)
 ```
 
-The ANOVA results show that there is a statistically significant difference in the mean weight of elephant tusks across the three years (F(2, 57) = 238.1, p \< 2.2e-16). The mean weight of tusks appears to have decreased over time, with the lowest average weight in 2010.
+The ANOVA results show that there is a statistically significant difference in the mean weight of elephant tusks across the three years ($R^2$ = 0.889, $F_{2,57}$ = 238.1, $p$ \< 2.2e-16). The R-squared value indicates that the model explains a high percentage of the variance in the response variable. The F-statistic with a p-value less than 0.05 indicates that the model is statistically significant.It can be concluded that the mean weight of tusks has decreased over time, with the reference average weight of 1970 shown as the intercept. The output shows that the slopes for both 1990 and 2010 are negatively significant (p-value \< 0.05) and the slope of 2010 is more negative than that of 1990, indicating that the average weight of confiscated elephant tusks has significantly decreased over time.
 
 To follow up on this result, I have performed a Tukey's HSD test and its illustration to determine which pairs of years have significantly different mean weights.
 
@@ -34,7 +35,7 @@ TukeyHSD(lm1)
 plot(TukeyHSD(lm1))
 ```
 
-In this example, there is not a statistically significant difference between year 2010-1990 as illustrated by the fact that the CI overlaps 0 and the p-value is greater than 0.05. By contrast, there appears to be significant differences in biomass between year 2010-1970 and year 1990-1970.
+In this graph, there is not a statistically significant difference between year 2010-1990 as illustrated by the fact that the CI overlaps 0 and the p-value is greater than 0.05. By contrast, there appears to be significant differences in biomass between year 2010-1970 and year 1990-1970.
 
 Besides, I have also visualized the results via a barplot of the means of tusk weight and standard errors per year group with error bars.
 
@@ -65,9 +66,10 @@ plot(lm1)
 ```
 
 ```{r}
-with(Tusk, sd(Tusk.kg[Year == 1970])/sd(Tusk.kg[Year == 1990]))
-with(Tusk, sd(Tusk.kg[Year == 1990])/sd(Tusk.kg[Year == 2010]))
-with(Tusk, sd(Tusk.kg[Year == 1970])/sd(Tusk.kg[Year == 2010]))
+a = with(Tusk, sd(Tusk.kg[Year == 1970])/sd(Tusk.kg[Year == 1990]))
+b = with(Tusk, sd(Tusk.kg[Year == 1990])/sd(Tusk.kg[Year == 2010]))
+c = with(Tusk, sd(Tusk.kg[Year == 1970])/sd(Tusk.kg[Year == 2010]))
+print(paste("The ratios of sample sd are", a,",", b,",", c))
 ```
 
 ## Problem 2
@@ -79,8 +81,9 @@ To test this hypothesis, I use a fixed complete block design with salt addition 
 Moreover, I have made interaction plots to determine whether an interaction term should be included in the model. The lines shown in the plot are nearly parallel to each other, indicating that the model of interaction.
 
 ```{r}
-salt <- read.csv("./labs/lab7 linear models with nominal explanatory variables/salt.csv")
-salt$inter <- interaction(salt$salt, salt$block)
+# salt <- read.csv("./labs/lab7 linear models with nominal explanatory variables/salt.csv")
+salt <- read.csv("salt.csv")
+# salt$inter <- interaction(salt$salt, salt$block)
 with(salt, interaction.plot(salt, block, biomass, col = c(1,
 2, 3, 4), las = 1, cex = 0.9))
 ```
@@ -89,16 +92,48 @@ Thus, I construct the model as follows:
 
 ```{r}
 lm2 <- lm(biomass ~ factor(salt) + factor(block), data = salt)
-
-TukeyHSD(lm2)
-
-
 summary(lm2)
+```
+
+Overall, the linear model analysis shows that the model is significant as a whole ($R^2$ = 0.826, $F_{8,15}$ = 14.6, $p$ = 8.593e-06 \< 0.001). The model's multiple R-squared is 0.8862, indicating that it explains a large proportion of the variation in plant biomass growth. The adjusted R-squared is 0.8255, indicating it has a good fit and is not overfitting the data.
+
+Generally, the analysis shows that both the salt and block factors have a significant effect on plant biomass growth. The estimate for the intercept is 15.5, representing the expected mean plant biomass growth when the salt level is 10 g m-2 and the plot is in block 1.
+
+The estimated coefficients for the factor "salt" represent the difference in mean plant biomass growth between the salt levels and the reference level (10 g m-2). The estimate for salt level 15 is 4.175, indicating that the mean biomass growth is significantly higher with an increase of 4.175 units for this level compared to the reference level (p = 0.05). On the contrary, the estimates for salt levels 20, 25, 30, and 35 are all negative, indicating a decrease in mean biomass growth compared to the reference level. All of these estimates are significant with p-values less than 0.01.
+
+The estimated coefficients for the factor "block" represent the difference in mean plant biomass growth between each block and the reference block (block 1). The estimate for blocks 2 and 3 show that their mean biomass growth is not significantly different from the reference block with p-value of 0.862 and 0.603, respectively. The estimate for block 4 is -6.5333 with a significant p-value, indicating that the mean biomass growth is significantly lower than the reference block by 6.5333 units.
+
+Besides the statistically significant main effects of salt and block reported by ANOVA results, I have also studied the group differences using the TukeyHSD test.
+
+```{r}
+TukeyHSD(lm2)
 plot(TukeyHSD(lm2))
 ```
 
+The Tukey tests reflect that there are significant differences between some of the salt addition levels. In other words, the plant biomass growth is significantly different between group pairs (10-20, 25, 30, 35) and pairs (15-20, 25, 30, 35). Thus, I find that the salt level groups of 10 and 15 are not different, and the other four levels 20, 25, 30, and 35 are not different. And from the illustration, it can be easily detected that the block 4 is significantly different than the other three blocks.
+
+At last, I also use the diagnosis plots to evaluate how well the model fits the data
+
 ```{r}
-ad <- read.csv("./labs/lab7 linear models with nominal explanatory variables/Sales.csv", header = T)
+par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
+plot(lm2)
+```
+
+```{r}
+lm2.1 <- lm(log(biomass) ~ factor(salt) + factor(block), data = salt)
+par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
+plot(lm2.1)
+```
+
+```{r}
+groups <- split(salt$biomass, salt$salt)
+lapply(groups, shapiro.test)
+
+var.test(biomass ~ salt, data = salt)
+```
+
+```{r}
+ad <- read.csv("Sales.csv", header = T)
 ad <- with(ad, data.frame(sales, city = factor(city), campaign = factor(campaign),
 time = factor(time)))
 
@@ -108,7 +143,6 @@ summary(mod.sales)
 require(lme4)
 require(lmerTest)
 
-plot(interactionMeans(mod.sales), las = 1)
 with(ad, tapply(sales, list(time), mean))
 with(ad, tapply(sales, list(campaign), mean))
 
