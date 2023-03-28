@@ -2,23 +2,117 @@
 title: 'ENV 710: Lab 7'
 author: "Jiahuan Li"
 date: "Spring 2023"
-output:
-  pdf_document:
-    df_print: paged
+output: pdf_document
+knitr:
+  code_folding: hide
 ---
+
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+require(mosaic)
+```
 
 ## Problem 1
 
-The null hypothesis is that the mean plant growth is the same for each fertilizer level versus
+The null hypothesis is that the average weight of confiscated elephant tusks is the same across the years 1970, 1990, and 2010. While the alternative hypothesis is that the average weight of confiscated elephant tusks has decreased over time in the three year groups.
 
-the alternative hypothesis that at least one of the means is different from one of the others.
+To test this hypothesis, we will use a one-way ANOVA design with the year as a factor because there is only one independent variable for this model. Besides, the number of the subjects in this situation is too small to conduct a random effect analysis. Thus, I construct the model as follows:
 
-logged & hunted, logged only, and pristine forests all have the same mean biomass?
+```{r}
+Tusk <- read.csv("labs/lab7 linear models with nominal explanatory variables/TuskData.csv")
+
+lm1 <- lm(Tusk.kg ~ factor(Year), data = Tusk)
+summary(lm1)
+```
+
+The ANOVA results show that there is a statistically significant difference in the mean weight of elephant tusks across the three years (F(2, 57) = 238.1, p \< 2.2e-16). The mean weight of tusks appears to have decreased over time, with the lowest average weight in 2010.
+
+To follow up on this result, I have performed a Tukey's HSD test and its illustration to determine which pairs of years have significantly different mean weights.
+
+```{r}
+TukeyHSD(lm1)
+plot(TukeyHSD(lm1))
+```
+
+In this example, there is not a statistically significant difference between year 2010-1990 as illustrated by the fact that the CI overlaps 0 and the p-value is greater than 0.05. By contrast, there appears to be significant differences in biomass between year 2010-1970 and year 1990-1970.
+
+Besides, I have also visualized the results via a barplot of the means of tusk weight and standard errors per year group with error bars.
+
+```{r}
+# Calculate mean and standard error for each year
+mean_data <- aggregate(Tusk$Tusk.kg, by=list(Year=Tusk$Year), FUN=mean)
+names(mean_data)[2] <- "Mean"
+se_data <- aggregate(Tusk$Tusk.kg, by=list(Year=Tusk$Year), FUN=sd)
+se_data$se <- se_data$x / sqrt(length(Tusk$Tusk.kg))
+
+# Create bar plot with error bars
+ggplot(mean_data, aes(x=Year, y=Mean, fill=Year)) +
+  geom_bar(stat="identity", position="dodge", color="black") +
+  geom_errorbar(aes(ymin=Mean-se_data$se, ymax=Mean+se_data$se), width=5) +
+  labs(title="Average Weight of Confiscated Elephant Tusks by Year", x="Year", y="Weight (kg)") +
+  theme_bw()
+```
+
+Then, I checked the assumptions of the statistical test using diagnosis plots. First, In the residual plot, the residuals randomly scattered around the centerline, indicating residuals roughly normally and approximately independently distributed with a mean of 0 and constant variance. Second, the qq plot shows a linear trend, indicating the normality of the dependent variables is good.
+
+Third, however, the figure of standardized residual plot is worrying since the variance seems to increase with the treatment means, which might be evidence of heteroscedasticity. Thus, I double checked the ratios of the sample standard deviations and find some of them exceed the limit of 2. To remedy this, I transform the dependent variable into a log format and rerun the model. But the ratio also cannot meet the requirement. Thus, I decide to ignore this problem since other plots are good.
+
+At last, this plot, the leverage plot does not reflect any outliers, although observations 14 and 16 have more leverage than other observations.
+
+```{r}
+par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
+plot(lm1)
+```
+
+```{r}
+with(Tusk, sd(Tusk.kg[Year == 1970])/sd(Tusk.kg[Year == 1990]))
+with(Tusk, sd(Tusk.kg[Year == 1990])/sd(Tusk.kg[Year == 2010]))
+with(Tusk, sd(Tusk.kg[Year == 1970])/sd(Tusk.kg[Year == 2010]))
+```
 
 ## Problem 2
 
-interaction plot needed
+The null hypothesis is that the mean biomass growth is the same across all six levels of salt addition. And the alternative hypothesis is that the mean biomass growth is different across at least one pair of salt addition levels.
 
-treat as factor: box plot as each level
+To test this hypothesis, I use a fixed complete block design with salt addition as the factor and block as the blocking variable. That is because the assignment of treatments is carried out separately within each block with every treatment included at least once in every block. Besides, the number of the subjects in this situation is 4, which is too small to conduct a random effect analysis.
 
-turkeyHSD only need to partly explain
+Moreover, I have made interaction plots to determine whether an interaction term should be included in the model. The lines shown in the plot are nearly parallel to each other, indicating that the model of interaction.
+
+```{r}
+salt <- read.csv("./labs/lab7 linear models with nominal explanatory variables/salt.csv")
+salt$inter <- interaction(salt$salt, salt$block)
+with(salt, interaction.plot(salt, block, biomass, col = c(1,
+2, 3, 4), las = 1, cex = 0.9))
+```
+
+Thus, I construct the model as follows:
+
+```{r}
+lm2 <- lm(biomass ~ factor(salt) + factor(block), data = salt)
+
+TukeyHSD(lm2)
+
+
+summary(lm2)
+plot(TukeyHSD(lm2))
+```
+
+```{r}
+ad <- read.csv("./labs/lab7 linear models with nominal explanatory variables/Sales.csv", header = T)
+ad <- with(ad, data.frame(sales, city = factor(city), campaign = factor(campaign),
+time = factor(time)))
+
+mod.sales <- lm(sales ~ campaign * time, data = ad)
+summary(mod.sales)
+
+require(lme4)
+require(lmerTest)
+
+plot(interactionMeans(mod.sales), las = 1)
+with(ad, tapply(sales, list(time), mean))
+with(ad, tapply(sales, list(campaign), mean))
+
+mod.rep <- lmer(sales ~ campaign + time + (1 | city/campaign),
+data = ad)
+summary(mod.rep)
+```
