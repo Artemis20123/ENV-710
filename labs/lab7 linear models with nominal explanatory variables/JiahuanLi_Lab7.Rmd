@@ -132,21 +132,49 @@ lapply(groups, shapiro.test)
 var.test(biomass ~ salt, data = salt)
 ```
 
+## Problem 3
+
+The null hypothesis is that the mean biomass growth is the same across all six levels of salt addition. And the alternative hypothesis is that the mean biomass growth is different across at least one pair of salt addition levels.
+
+To test this hypothesis, I use a factorial with salt addition as the factor and block as the blocking variable. That is because the assignment of treatments is carried out separately within each block with every treatment included at least once in every block. Besides, the number of the subjects in this situation is 4, which is too small to conduct a random effect analysis.
+
+Moreover, I have made interaction plots to determine whether an interaction term should be included in the model. The lines shown in the plot are nearly parallel to each other, indicating that the model of interaction.
+
 ```{r}
-ad <- read.csv("Sales.csv", header = T)
-ad <- with(ad, data.frame(sales, city = factor(city), campaign = factor(campaign),
-time = factor(time)))
+{r}
+lm3 <- lm(thick ~ factor(dose) * factor(supp), data = scale)
+summary(lm3)
+```
 
-mod.sales <- lm(sales ~ campaign * time, data = ad)
-summary(mod.sales)
+The statistical results from the linear regression analysis suggest that both dose and supplement have a significant effect on the thickness of pangolin scales. The coefficients associated with both the dose and supplement variables are statistically significant at the 0.001 level, indicating that increasing either the dose or supplement is associated with an increase in the thickness of pangolin scales.
 
-require(lme4)
-require(lmerTest)
+Moreover, there may be a significant interaction effect between the two variables, as indicated by the significant coefficient associated with the interaction term between dose and supplement. The coefficient for the interaction term "dose 2:supplement Zinc" is negative and significant at the 0.05 level, indicating that the effect of dose 2 on scale thickness is significantly different between the two supplement groups. Specifically, the effect of dose 2 is smaller for pangolins receiving supplement Zinc compared to those receiving supplement B.
 
-with(ad, tapply(sales, list(time), mean))
-with(ad, tapply(sales, list(campaign), mean))
+The adjusted R-squared value of 0.7746 suggests that the model explains a substantial proportion of the variance in the data, and the F-statistic is significant, indicating that the model as a whole is a good fit for the data.
 
-mod.rep <- lmer(sales ~ campaign + time + (1 | city/campaign),
-data = ad)
-summary(mod.rep)
+overdose Zn could be harmful?
+
+```{r}
+scale <- read.csv("ScaleThickness.csv")
+with(scale, interaction.plot(dose, supp, thick, col = c(1,
+2, 3, 4), las = 1, cex = 0.9))
+```
+
+```{r}
+TukeyHSD(lm3)
+plot(TukeyHSD(lm3))
+```
+
+```{r}
+scale$inter <- interaction(scale$supp, scale$dose)
+ggplot(data = scale, aes(y = thick, x = inter)) + 
+  geom_boxplot(aes(fill = inter)) +
+  labs(y = "Scale thickness, ", x = "Supplements") + theme_bw() +
+  theme(legend.position = "none", 
+      axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+```{r}
+par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
+plot(lm3)
 ```
