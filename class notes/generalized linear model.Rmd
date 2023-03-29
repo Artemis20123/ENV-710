@@ -1,0 +1,139 @@
+### previous work (make a mind map for what i have learnt)
+
+-   multiple indpt vars;
+
+-   categorical vars;
+
+-    interaction;
+
+-   modification (log, centering, scale);
+
+-   model selection (AIC number) ;
+
+-   random effect
+
+```{r}
+# install.packages("faraway")
+# install.packages("AER")
+#install.packages("MASS")
+#install.packages("sjPlot")
+```
+
+### Poisson regression (not linear relation between Y and Xs)
+
+#### species numbers
+
+可以看到，图中第一列第二行，那个关系并不是直线，而是一个渐弯的曲线
+
+图中第一列是因变量和各种可能factors的图示
+
+how to draw that plot??
+
+```{r}
+require(faraway)
+data("gala")
+gala <- gala
+
+sp1 <- glm(Species ~ Endemics + Area + Elevation + Nearest + Adjacent,
+           family = poisson, data = gala)
+
+summary(sp1)
+plot(sp1)
+```
+
+for the report:
+
+-   what does the dispersion parameter mean?
+
+-   null / residual deviance?? meanning?
+
+    -   loss 5 df, making the value decrease by 3000, it is good
+
+    -   what is the aic for? for which type of the two?
+
+diagnosis plots
+
+-   first: the line is curved, not good, indicating the mean of variance is not always 0; though randomly scattered
+
+-   scale-location: hope 95% residuals in the (-2,2) region of y value, so, not good.
+
+-   leverage: we do not know the dataset well. so cannot judge whether to discard the outliers or not.
+
+```{r}
+sp2 <- update(sp1, .~.-Adjacent)
+summary(sp2)
+# why removing adjacent causes the elevation factor becoming significant?
+# these factors are not isolated?
+
+# test for overdispersion
+require(AER)
+dispersiontest(sp2)
+
+# the value 10, 1 are the ratios of variance vs. mean
+# the estimate of 10 is much greater than 1, also considering the p-value. They make the overdispersion problem an issue in this case.
+```
+
+```{r}
+sp3 <- update(sp2, .~., family = quasipoisson)
+summary(sp3)
+```
+
+11.9 is the appropriate value?
+
+AIC: NA. the quasipossion is not a real distribution. it has multipulations on its F and t values
+
+use quasi one because the overdispersion issue. but its aic is na, making it not able to compare in value. but the process makes sense
+
+? on the slides, the second question i do not know answer
+
+```{r}
+sp4 <- update(sp3, .~.-Adjacent)
+summary(sp4)
+```
+
+how to say deleting the parameter makes the model better? do not know AIC?
+
+```{r}
+sp5
+```
+
+the diagnosis plot:
+
+scale-location better: in the (-2,2) range; leverage also better
+
+```{r}
+require(MASS)
+sp6 <- glm.nb()
+
+lrtest(sp5p, sp6)
+```
+
+3 ways
+
+-   quasipossion: easy to operate, but hard to make comparison without aic
+
+-   mass: negative binomial: it is a distribution and have aic, can compare to poission distribution
+
+    -   they (negative/ poisson) are nested models from the distribution
+
+likelihood test: p-value indicates these models are different?
+
+```{r}
+sp7
+
+pchisq
+```
+
+we want the pchisq command returns a large p-value.
+
+-   it means that we do not need to reduce degree of freedoms too much??
+
+-   related to the null/residual deviance
+
+quasi: end up 2 variables, because of missing aic makes the further selection of indpt vars unavailable
+
+negative: end up 1 variable
+
+exp the parameter
+
+with every addition endemic species. the number of island species increases by 1.04 times (4%)
