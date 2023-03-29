@@ -7,39 +7,46 @@ knitr:
   code_folding: hide
 ---
 
-```{r, message=FALSE, warning=FALSE}
-library(ggplot2)
-require(mosaic)
-library(agricolae)
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, warning = F, message = FALSE)
+pacman::p_load(ggplot2, mosaic, agricolae)
 ```
 
 ## Problem 1
 
+### Hypothesis
+
 The null hypothesis is that the average weight of confiscated elephant tusks is the same across the years 1970, 1990, and 2010. While the alternative hypothesis is that the average weight of confiscated elephant tusks has decreased over time in the three year groups.
 
-To test this hypothesis, we will use a one-way ANOVA design with the year as a factor because there is only one independent variable for this model. Besides, the number of the subjects in this situation is too small to conduct a random effect analysis. Thus, I construct the model as follows:
+### Model
+
+To test this hypothesis, we will use a one-way ANOVA design with year as the factor. That is because there is only one independent variable in the present model. Besides, the limited number of subjects in this study precludes a random effect analysis. Consequently, the model is constructed as follows:
 
 ```{r}
-Tusk <- read.csv("TuskData.csv")
+Tusk <- read.csv("./labs/lab7 linear models with nominal explanatory variables/TuskData.csv")
 
 lm1 <- lm(Tusk.kg ~ factor(Year), data = Tusk)
 summary(lm1)
 ```
 
-The ANOVA results show that there is a statistically significant difference in the mean weight of elephant tusks across the three years ($R^2$ = 0.889, $F_{2,57}$ = 238.1, $p$ \< 2.2e-16). The R-squared value indicates that the model explains a high percentage of the variance in the response variable. The F-statistic with a p-value less than 0.05 indicates that the model is statistically significant.It can be concluded that the mean weight of tusks has decreased over time, with the reference average weight of 1970 shown as the intercept. The output shows that the slopes for both 1990 and 2010 are negatively significant (p-value \< 0.05) and the slope of 2010 is more negative than that of 1990, indicating that the average weight of confiscated elephant tusks has significantly decreased over time.
+The ANOVA results show that there is a statistically significant difference in the mean weight of elephant tusks across the three years ($R^2$ = 0.889, $F_{2,57}$ = 238.1, $p$ \< 2.2e-16). The R-squared value indicates that the model explains a high percentage of the variance in the response variable. The F-statistic with a p-value less than 0.05 indicates that the model is statistically significant.
 
-To follow up on this result, I have performed a Tukey's HSD test and its illustration to determine which pairs of years have significantly different mean weights.
+Based on the analysis of the data, it can be inferred that the hypothesis positing a decline in the mean weight of the confiscated elephant tusks over time is supported. With the reference average weight of 1970 serves as the intercept, the output reveals that the slopes for both 1990 and 2010 are statistically significant (p-value \< 0.05) with negative values. Furthermore, the slope for 2010 (-9.54) is more negative than that of 1990 (-8.79), indicating a more significant decrease in the average weight of the tusks over time. Therefore, the findings suggest that the average weight of confiscated elephant tusks has significantly decreased over the three year groups, supporting the alternative hypothesis.
 
-```{r}
+### Post-hoc test
+
+To follow up on this result, I have performed a Tukey's HSD test to determine which pairs of years have significantly different mean weights.
+
+```{r, fig.width=6,fig.height=4,fig.align='center'}
 TukeyHSD(lm1)
 plot(TukeyHSD(lm1))
 ```
 
-In this graph, there is not a statistically significant difference between year 2010-1990 as illustrated by the fact that the CI overlaps 0 and the p-value is greater than 0.05. By contrast, there appears to be significant differences in biomass between year 2010-1970 and year 1990-1970.
+In this graph, there is not a statistically significant difference between the yeara 2010 and 1990 as illustrated by the fact that the CI overlaps 0 and the p-value is greater than 0.05. By contrast, there appears to be significant differences in biomass between the years 2010 and 1970 and years 1990 and 1970.
 
 Besides, I have also visualized the results via a barplot of the means of tusk weight and standard errors per year group with error bars.
 
-```{r}
+```{r, fig.width=8,fig.height=4,fig.align='center'}
 # Calculate mean and standard error for each year
 mean_data <- aggregate(Tusk$Tusk.kg, by=list(Year=Tusk$Year), FUN=mean)
 names(mean_data)[2] <- "Mean"
@@ -54,11 +61,13 @@ ggplot(mean_data, aes(x=Year, y=Mean, fill=Year)) +
   theme_bw()
 ```
 
-Then, I checked the assumptions of the statistical test using diagnosis plots. First, In the residual plot, the residuals randomly scattered around the centerline, indicating residuals roughly normally and approximately independently distributed with a mean of 0 and constant variance. Second, the qq plot shows a linear trend, indicating the normality of the dependent variables is good.
+### Assumptions
 
-Third, however, the figure of standardized residual plot is worrying since the variance seems to increase with the treatment means, which might be evidence of heteroscedasticity. Thus, I double checked the ratios of the sample standard deviations and find some of them exceed the limit of 2. To remedy this, I transform the dependent variable into a log format and rerun the model. But the ratio also cannot meet the requirement. Thus, I decide to ignore this problem since other plots are good.
+The diagnostic plots were utilized to assess the assumptions of the statistical test. The residual plot showed that the residuals were randomly scattered around the centerline, indicating that they were approximately normally and independently distributed with a mean of 0 and a constant variance. And the QQ plot displayed a linear trend, indicating good normality of the residuals.
 
-At last, this plot, the leverage plot does not reflect any outliers, although observations 14 and 16 have more leverage than other observations.
+Third, however, the figure of the standardized residual plot is worrying since the variance seems to increase with the treatment means, which might be evidence of heteroscedasticity. Further investigation revealed that some of the ratios of the sample standard deviations exceeded the limit of 2. To address this issue, the dependent variable was transformed into a log format and the model was re-run. However, the ratio still did not meet the required criteria. Therefore, I decided to ignore this problem since the other diagnostic plots were satisfactory.
+
+The leverage plot did not show any outliers, although observations 14 and 16 had more leverage than the other observations. Overall, the diagnostic plots suggested that the assumptions of the statistical test were generally met, despite the presence of potential heteroscedasticity.
 
 ```{r}
 par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
@@ -69,20 +78,26 @@ plot(lm1)
 a = with(Tusk, sd(Tusk.kg[Year == 1970])/sd(Tusk.kg[Year == 1990]))
 b = with(Tusk, sd(Tusk.kg[Year == 1990])/sd(Tusk.kg[Year == 2010]))
 c = with(Tusk, sd(Tusk.kg[Year == 1970])/sd(Tusk.kg[Year == 2010]))
-print(paste("The ratios of sample sd are", a,",", b,",", c))
+print(paste("The ratios of sample dependent variables' sds are", a,",", b,",", c))
 ```
 
 ## Problem 2
 
-The null hypothesis is that the mean biomass growth is the same across all six levels of salt addition. And the alternative hypothesis is that the mean biomass growth is different across at least one pair of salt addition levels.
+### Hypothesis
 
-To test this hypothesis, I use a fixed complete block design with salt addition as the factor and block as the blocking variable. That is because the assignment of treatments is carried out separately within each block with every treatment included at least once in every block. Besides, the number of the subjects in this situation is 4, which is too small to conduct a random effect analysis.
+The null hypothesis is that the mean biomass growth is the same across all six levels of salt addition. While the alternative hypothesis is that the mean biomass growth is different across at least one pair of salt addition levels.
 
-Moreover, I have made interaction plots to determine whether an interaction term should be included in the model. The lines shown in the plot are nearly parallel to each other, indicating that the model of interaction.
+### Model
+
+In order to test the hypothesis, a complete block design with salt addition as the factor and block as the blocking variable was utilized. It is "complete" because the treatments were assigned separately within each block, ensuring that each treatment was included at least once in every block.
+
+The main reason for not considering the interaction is that the blocks are not the focus of the experiment. The factor of interest is salt addition, and the blocks are simply a part of the experimental design. Moreover, I have also constructed an interaction plot to determine whether the interaction term should be included. However, the lines in the plot are nearly parallel, suggesting that there is no need for that interaction term.
+
+Besides, the block effect is better to be treated as a random effect. However, it is not feasible due to the small number of subjects (less than 6).
 
 ```{r}
-# salt <- read.csv("./labs/lab7 linear models with nominal explanatory variables/salt.csv")
-salt <- read.csv("salt.csv")
+salt <- read.csv("./labs/lab7 linear models with nominal explanatory variables/salt.csv")
+# salt <- read.csv("salt.csv")
 # salt$inter <- interaction(salt$salt, salt$block)
 with(salt, interaction.plot(salt, block, biomass, col = c(1,
 2, 3, 4), las = 1, cex = 0.9))
@@ -103,69 +118,82 @@ The estimated coefficients for the factor "salt" represent the difference in mea
 
 The estimated coefficients for the factor "block" represent the difference in mean plant biomass growth between each block and the reference block (block 1). The estimate for blocks 2 and 3 show that their mean biomass growth is not significantly different from the reference block with p-value of 0.862 and 0.603, respectively. The estimate for block 4 is -6.5333 with a significant p-value, indicating that the mean biomass growth is significantly lower than the reference block by 6.5333 units.
 
+### Post-hoc test
+
 Besides the statistically significant main effects of salt and block reported by ANOVA results, I have also studied the group differences using the TukeyHSD test.
 
 ```{r}
 TukeyHSD(lm2)
-plot(TukeyHSD(lm2))
+
+par(mfrow=c(1,2))
+plot(TukeyHSD(lm2), cex.axis=0.5, las = 1)
 ```
 
 The Tukey tests reflect that there are significant differences between some of the salt addition levels. In other words, the plant biomass growth is significantly different between group pairs (10-20, 25, 30, 35) and pairs (15-20, 25, 30, 35). Thus, I find that the salt level groups of 10 and 15 are not different, and the other four levels 20, 25, 30, and 35 are not different. And from the illustration, it can be easily detected that the block 4 is significantly different than the other three blocks.
 
-At last, I also use the diagnosis plots to evaluate how well the model fits the data
+### Assumptions
+
+At last, I also use the diagnosis plots to evaluate how well the model fits the data. The qq plot suggests that the residuals are normally distributed, which is an indication that the assumption of normality is met. However, the residual plots show a slightly twisted line, which could be a cause for concern. Despite this, the distribution of residuals appears to be random in the first and third graphs.
+
+In an effort to address this issue, a log-transformed model was attempted. However, upon examination of the diagnostic plots, it was found that this model does not produce significantly better results. As a result, I decide that the original model setting should be maintained.
 
 ```{r}
 par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
 plot(lm2)
 ```
 
-```{r}
-lm2.1 <- lm(log(biomass) ~ factor(salt) + factor(block), data = salt)
-par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
-plot(lm2.1)
-```
+Besides, I also use some numeric tests to test whether the distribution of dependent variables meets the model assumptions rather than the residuals which have been tested in the diagnosis plots above. We can find that the p-values of `shapiro.test()` and `bartlett.test()` below are both greater than 0.05, indicating the null hypotheses that each group is normally distributed and the variances of groups are similar cannot be rejected. The homogeneity of variances of the dependent variable biomass is also illustrated in the figure.
 
 ```{r}
 groups <- split(salt$biomass, salt$salt)
 lapply(groups, shapiro.test)
 
-var.test(biomass ~ salt, data = salt)
+# var.test(biomass ~ salt, data = salt)
+bartlett.test(biomass~factor(salt), data = salt)
+
+require(graphics)
+plot(biomass ~ factor(salt), data = salt)
 ```
 
 ## Problem 3
 
-The null hypothesis is that the mean biomass growth is the same across all six levels of salt addition. And the alternative hypothesis is that the mean biomass growth is different across at least one pair of salt addition levels.
+### Hypothesis
 
-To test this hypothesis, I use a factorial with salt addition as the factor and block as the blocking variable. That is because the assignment of treatments is carried out separately within each block with every treatment included at least once in every block. Besides, the number of the subjects in this situation is 4, which is too small to conduct a random effect analysis.
+The null hypothesis is that there is no significant effect of the levels of dose, thickness, and their interactions on the thickness of pangolin scales. While the alternative hypothesis is that there is a significant effect of dose and supplement on the thickness of pangolin scales, and there is an interaction between the two factors.
 
-Moreover, I have made interaction plots to determine whether an interaction term should be included in the model. The lines shown in the plot are nearly parallel to each other, indicating that the model of interaction.
+### Model
 
-```{r}
-{r}
-lm3 <- lm(thick ~ factor(dose) * factor(supp), data = scale)
-summary(lm3)
-```
+A two-way ANOVA is appropriate for this study because there are two categorical independent variables (dose and supplement) and one dependent variable (scale thickness). The number of subjects for the two variables is both less than 6, thus, the random effect will not be considered.
 
-The statistical results from the linear regression analysis suggest that both dose and supplement have a significant effect on the thickness of pangolin scales. The coefficients associated with both the dose and supplement variables are statistically significant at the 0.001 level, indicating that increasing either the dose or supplement is associated with an increase in the thickness of pangolin scales.
+In contrast to problem 2, the effects of both supplement and dose are important in the hypothesis being tested in this scenario. Therefore, it is necessary to consider the interaction between these two factors in the model construction. Additionally, the non-parallel lines in the interaction plots further highlight the need to include an interaction term in the model.
 
-Moreover, there may be a significant interaction effect between the two variables, as indicated by the significant coefficient associated with the interaction term between dose and supplement. The coefficient for the interaction term "dose 2:supplement Zinc" is negative and significant at the 0.05 level, indicating that the effect of dose 2 on scale thickness is significantly different between the two supplement groups. Specifically, the effect of dose 2 is smaller for pangolins receiving supplement Zinc compared to those receiving supplement B.
-
-The adjusted R-squared value of 0.7746 suggests that the model explains a substantial proportion of the variance in the data, and the F-statistic is significant, indicating that the model as a whole is a good fit for the data.
-
-overdose Zn could be harmful?
-
-```{r}
-scale <- read.csv("ScaleThickness.csv")
+```{r, fig.width=8,fig.height=4,fig.align='center'}
+scale <- read.csv("./labs/lab7 linear models with nominal explanatory variables/ScaleThickness.csv")
 with(scale, interaction.plot(dose, supp, thick, col = c(1,
 2, 3, 4), las = 1, cex = 0.9))
 ```
 
 ```{r}
-TukeyHSD(lm3)
-plot(TukeyHSD(lm3))
+lm3 <- lm(thick ~ factor(dose) * factor(supp), data = scale)
+summary(lm3)
 ```
 
-```{r}
+Similarly, the results show that the model is significant as a whole (\$R\^2\$ = 0.775, \$F\_{5,54}\$ = 41.56, \$p\$ = \< 2.2e-16). For the hypothesis, the statistical results suggest that both dose and supplement have a significant effect on the thickness of pangolin scales with p-values less than 0.05. The reference situation reflected by the intercept is the thickness of scales for pangolins (7.98) receiving 0.5 doses of Vitamin B, which is significantly different from 0 according to the p-value. And the slope coefficients of all the individual dose and supplement factors are positive, indicating the positive relationship between the thickness and the amount of the supplement received in whatever types of nutrient (Vitamin B or Zinc)
+
+Moreover, there is also a significant interaction effect between the two factors, as indicated by the p-value associated with one of the interaction terms. The slope coefficient for the interaction term "dose 2:supplement Zinc" is -5.33, indicating that one unit change in dose 2 (from level 1 to level 2) will cause the impact of changing supplement VitB to ZinC on the mean thickness to decrease by 5.33, and vice versa. The slope coefficient of interaction term actually reports how a change in one variable impacts its interacted variable's effect on the dependent variable.
+
+### Post-hoc test
+
+```{r, fig.width=8,fig.height=4,fig.align='center'}
+TukeyHSD(lm3)
+
+par(mfrow=c(1,3))
+plot(TukeyHSD(lm3), las =1)
+```
+
+From the Tukey tests, we can find significant differences between all the different dose and supplement groups. And for the interaction groups, the situations are more complicated and I have plotted another graph to better visualize that. We can see that more than a half interaction groups are significantly different while a few are similar.
+
+```{r, fig.width=8,fig.height=4,fig.align='center'}
 scale$inter <- interaction(scale$supp, scale$dose)
 ggplot(data = scale, aes(y = thick, x = inter)) + 
   geom_boxplot(aes(fill = inter)) +
@@ -174,7 +202,17 @@ ggplot(data = scale, aes(y = thick, x = inter)) +
       axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
 
+### Assumptions
+
+The diagnosis plots for this model residuals are highly satisfactory. We can find a clear stright line in qqplot and residuals plots. Besides, the residuals are equally and randomly distributed in the first and third graphs. Moreover, the leverage plot also does not report any noticeable outliers.
+
 ```{r}
 par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
 plot(lm3)
+```
+
+\newpage
+
+```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+
 ```
