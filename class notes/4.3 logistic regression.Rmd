@@ -1,0 +1,109 @@
+### logistic regression
+
+binary response variables 0/1
+
+for one trail? different from binomial regression (this Wed)
+
+poisson: response vars are counts
+
+### Titanic survival
+
+```{r}
+# install.packages("vcdExtra")
+data(Titanicp, package = "vcdExtra")
+tnc <- Titanicp
+tnc$surv <- ifelse(tnc$survived == "survived", 1, 0)
+```
+
+```{r}
+# install.packages("Amelia")
+require(Amelia)
+missmap(tnc)
+
+tnc <- tnc[!is.na(tnc$age)]
+ tnc1 <- na.omit(tnc)
+```
+
+```{r}
+
+ftable()
+
+# remember the code
+require(ggplot2)
+ggpairs(tnc1)
+```
+
+```{r}
+mod1 <- glm(surv ~ factor(pclass) + age + factor(sex), 
+            data = tnc1, family = 'binomial')
+summary(mod1)
+# - 3% impacts due to age increase, the formula's link function is log (y) or log (y/1-y)?
+
+log.odds <- coef(mod1)
+# no effect = 0
+
+odds <- exp(log.odds)
+# make the coefficients to the odds scale, now no effect = 1
+# below 1: negative effect
+```
+
+do not really understand the explanation of parameter? one unit increase causes ...?
+
+only consider the odds parameters (exp transformed)? and compare to 1
+
+but what is the link function here? famaily = 'binomial', the odds = y/1-y? thus, the odds do not mean y? how can we use this to explain the change in y
+
+```{r}
+# able to calculate the probability of different conditions (x)
+
+# install.packages('boot')
+library(boot)
+inv.logit(log.odds[1] + log.odds[4] * mean(tnc1$age))
+
+```
+
+for logistic regression, the y is only the probability?
+
+-   how is it calculated from the original response vars (0/1)
+
+visualization:
+
+-   f1: female of first class; m1: male of first class
+
+-   blue: female, yellow: male
+
+-   conclusion: female, young, first class have the highest survival rate
+
+```{r}
+plot(mod1)
+```
+
+how to evaluate multicollinearity and the linear relationship between x and logit y?
+
+```{r}
+summary(mod1)
+# why the null/ residual deviance is good?
+
+#goodness of fit
+
+# what does this R2 coefficient mean? FEs proportion of explaination?
+```
+
+just like AIC number, the Dev is less is better?
+
+why the case does not have over dispersion issue?
+
+### Diabetes
+
+```{r}
+diabete <- read.csv("./Data/diabetes.csv")
+
+diabete$diab <- ifelse(diabete$type == 'Yes',1,0)
+
+mod2 <- glm(type_num ~ npreg + glu + bp + skin + bmi + ped + age, data = diabete, family = 'binomial')
+
+summary(mod2)
+
+mod2.1 <-  glm(type_num ~ bmi + age, data = diabete, family = 'binomial')
+summary(mod2.1)
+```
