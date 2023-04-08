@@ -8,6 +8,8 @@ logistic: y = 1 or 0
 
 binomial: y = x out of n trails
 
+-   the situation is count data as ys (similar to poisson regression), but we only care about the binary results (success or not)?
+
 in what condition to use logistic regression? and in what using binomial regression?
 
 ### Phenology
