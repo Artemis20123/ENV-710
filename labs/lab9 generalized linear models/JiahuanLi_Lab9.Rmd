@@ -9,85 +9,39 @@ knitr:
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, eval = TRUE, warning = F, message = FALSE)
-pacman::p_load(ggplot2, car)
+pacman::p_load(ggplot2, GGally)
+library(ggplot2)
+library(GGally)
 ```
-
-binary no dispersion test
-
-package to have words
-
-第一个最后只留x2 看每一个model LRT和initial model比较，不significant说明可以减少，significant说明得保留原model，然后看AIC，只留x2好 （LRT each + AIC for all, minimum x2）
-
-assumption： plots，
-
-dispersiontest(nut1) overdispersion （chisq），
-
-pchisq，pseudo-R2
-
-只有一个参数所以没有vif
-
-mean(residuals(lm1.best))
-
-shapiro.test(residuals(lm2.best))
-
-(录音: assumption plot, overdis, pseudoR2)
-
-（count data，focus on proportion than numbers，use logistics instead of poission）
-
-第二题，最开始是三个参数相乘，从最不显著的variable开始一个个移走，最后简化为两项相加 （YR + BK）。binomial
-
-original diagnosis plot不好，需要画DHARMa plot 参考上课ppt，没有发现什么问题
-
-然后测试其它参数（pchisq，persedoR2），加上vif 测共线性，goodness of fit,R2
-
-第三题，binomial 要包含random effect
-
-没有reduce variable，上来就是significant的
-
-要check 多重共线性，inflation
-
-res5 \<- simulateResiduals(fittedModel = o5) \> plot(res5)
-
-画DHARMa plot, 原来的plots只有一个residual图，包含在dhar图里面了
-
-测以上合适的参数以外，再测随机效应所占比例 (MuMIn::r.squaredGLMM(o5); merTools::plotFEsim(FEsim(o5), intercept = T); dotplot(ranef(o5)))
-
-require(performance) check_overdispersion(o3) high dispersion \>2
-
-so, correct overdispersion by adding an observation-level random effect, but residuals don't look good plot(o3)
-
-thus, using a negative binomial model
-
-after the DHARMa plot
-
-testZeroInflation(O0)
-
-testDispersion(O0): binomial, may not need
 
 # Problem 1
 
-## Research Question and Hypothesis
+## Hypothesis
 
-Research questions of interest for problem 1 are 1) what variables (including mean tree diameter, mean height, mean wood density, mean basal area, and presence of tree falls in the plot) influence plot biomass (AGBH.Mg.ha) in the given dataset? And 2) what is the direction and magnitude of their effect on biomass? The null hypothesis is that none of the variables have a significant impact on plot biomass, while the alternative hypothesis is that at least one variable significantly influences biomass.
+The null hypothesis for problem 1 is that there is no significant relationship between the predictors (aircraft type, bomb load, and aircrew experience) and the response variable (damage of attack aircraft during the Vietnam War). The alternative hypothesis is that there is a significant relationship between at least one of the predictors and the response variable.
 
 ## Method
 
-### Normality assessment
+### Data preview
 
-The QQ plot indicates that the dependent variable biomass satisfies the normality assumption, rendering log transformation unnecessary. However, a log-transformed sequence of biomass was also tested and found to be less satisfactory than the original sequence.
+```{r, warning=FALSE,message=FALSE}
+# air <- read.csv("./labs/lab9 Generalized Linear Models/AircraftDat.csv")
+air <- read.csv("AircraftDat.csv")
+air$x1 <- factor(air$x1)
 
-```{r echo=FALSE, fig.align='center', fig.height=4, fig.width=6}
-air <- read.csv("labs/lab9  Generalized Linear Models/AircraftDat.csv")
-
-ggplot(data.frame(x = Tree$AGBH.Mg.ha), aes(sample = x)) +
-  stat_qq() +
-  stat_qq_line() +
-  labs(title = "Normal QQ Plot for Biomass", x = "Expected Quantiles", y = "Sample Quantiles")
+ggpairs(air)
+summary(air)
 ```
+
+From the plot, we can find that
+
+first, cones ranges from 0 to 60, which is appropriate because the dependent variable needs to be a non-negative integer for Poisson regression. It also not normally distributed, which we don't expect it to be.
+
+Second, all the variable are continuous - no categorical independent variables. Third, there do not seem to be linear relationships between cones and the other variables in the raw data - that is fine too, because that is not an assumption of Poisson regression.
 
 ### Initial model
 
-Therefore, the initial model encompassing all potential influencing variables is formulated as follows:
+Poisson regression is considered in this case since the response variable consists of count data. Therefore, the initial model encompassing all potential influencing variables is formulated as follows:
 
 ```{r}
 lm1 <- glm(y ~ as.factor(x1) + x2 + x3,
