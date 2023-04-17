@@ -1,0 +1,9 @@
+4.  what does the dependency structure mean? what is the dependency?
+
+diagnosis plot: explains with the exact meaning and features of variables
+
+should focus more on the effect rather than the significance
+
+-   what is the importance of the effect
+
+command: AICctab

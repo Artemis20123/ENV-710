@@ -1,0 +1,271 @@
+---
+title: 'ENV 710: Lab 8'
+author: "Jiahuan Li"
+date: "Spring 2023"
+output: pdf_document
+knitr:
+  code_folding: hide
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, warning = F, message = FALSE)
+pacman::p_load(ggplot2, car)
+```
+
+binary no dispersion test
+
+package to have words
+
+第一个最后只留x2 看每一个model LRT和initial model比较，不significant说明可以减少，significant说明得保留原model，然后看AIC，只留x2好
+
+assumption： plots，
+
+dispersiontest(nut1)
+overdispersion （chisq），
+
+pchisq，pseudo-R2
+
+只有一个参数所以没有vif
+
+mean(residuals(lm1.best))
+
+shapiro.test(residuals(lm2.best))
+
+（count data，focus on proportion than numbers，use logistics instead of poission）
+
+第二题，最开始是三个参数相乘，最后简化为两项相加。binomial
+
+original diagnosis plot不好，需要画DHARMa plot 参考上课ppt
+
+然后测试其它参数（pchisq，persedoR2），加上vif 测共线性
+
+第三题，binomial 要包含random effect
+res5 \<- simulateResiduals(fittedModel = o5)
+\> plot(res5)
+
+画DHARMa plot, 原来的plots只有一个residual图，包含在dhar图里面了
+
+测以上合适的参数以外，再测随机效应所占比例 (MuMIn::r.squaredGLMM(o5); merTools::plotFEsim(FEsim(o5), intercept = T); dotplot(ranef(o5)))
+
+require(performance)
+check_overdispersion(o3) high dispersion \>2
+
+so, correct overdispersion by adding an observation-level random effect, but residuals don\'t look good
+plot(o3)
+
+thus, using a negative binomial model
+
+testZeroInflation(O0)
+
+testDispersion(O0): binomial, may not need
+
+# Problem 1
+
+## Research Question and Hypothesis
+
+Research questions of interest for problem 1 are 1) what variables (including mean tree diameter, mean height, mean wood density, mean basal area, and presence of tree falls in the plot) influence plot biomass (AGBH.Mg.ha) in the given dataset? And 2) what is the direction and magnitude of their effect on biomass? The null hypothesis is that none of the variables have a significant impact on plot biomass, while the alternative hypothesis is that at least one variable significantly influences biomass.
+
+## Method
+
+### Normality assessment
+
+The QQ plot indicates that the dependent variable biomass satisfies the normality assumption, rendering log transformation unnecessary. However, a log-transformed sequence of biomass was also tested and found to be less satisfactory than the original sequence.
+
+```{r echo=FALSE, fig.align='center', fig.height=4, fig.width=6}
+air <- read.csv("labs/lab9  Generalized Linear Models/AircraftDat.csv")
+
+ggplot(data.frame(x = Tree$AGBH.Mg.ha), aes(sample = x)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(title = "Normal QQ Plot for Biomass", x = "Expected Quantiles", y = "Sample Quantiles")
+```
+
+### Initial model
+
+Therefore, the initial model encompassing all potential influencing variables is formulated as follows:
+
+```{r}
+lm1 <- glm(y ~ as.factor(x1) + x2 + x3,
+          data = air, family = poisson)
+summary(lm1)
+
+lm2.1<- update(lm1, ~.-as.factor(x1))
+summary(lm2.1)
+
+lm2.2 <- update(lm1, ~.-x2)
+summary(lm2.2)
+
+lm2.3 <- update(lm1, ~.-x3)
+summary(lm2.3)
+
+lm3.1 <- glm(y ~ as.factor(x1),
+          data = air, family = poisson)
+summary(lm3.1)
+
+lm3.2 <- glm(y ~ x2,
+          data = air, family = poisson)
+summary(lm3.2)
+
+lm3.3 <- glm(y ~ x3,
+          data = air, family = poisson)
+summary(lm3.3)
+
+library(lmtest)
+
+lrtest(lm1, lm2.1, lm2.2, lm2.3,lm3.1,lm3.2,lm3.3)
+
+
+# which is better
+# overdispersion? change the method to quasi?
+# which assumptions?
+```
+
+The regression summary reveals that only the `intercept` and `mWD.g.m3` terms are statistically significant, suggesting that the model is likely not the minimum adequate model for the problem.
+
+### Model reduction
+
+To determine the minimum adequate model, a backward stepwise regression approach is employed. Starting with the full model, the `step()` function is used to perform step-wise model selection.
+
+```{r}
+step(lm1)
+```
+
+I use the Akaike Information Criterion (AIC) for model comparison. The `step(lm1)` reports the AIC number for each step (i.e., each nested model). For each step, the table displays the AIC numbers associated with the removal of specific predictors indicated by their respective row names.
+
+For instance, the starting AIC number is 633.19. In this case, the AIC numbers for `factor(Tree.Fall)`, `mDBH.cm`, and `mH.m` are 629.96, 632.41, and 632.61, respectively, which are smaller than the model AIC of 633.19. Thus, removing these variables would result in a reduction of the model AIC number, indicating an improvement in the model. Then, examining the final step in which these three predictors were eliminated, we find an AIC number of 627.35. In this case, removing any of the remaining variables would cause an increase in AIC, indicating that the model has achieved the minimum adequate model.
+
+### Minimum adequate model
+
+```{r echo=TRUE}
+lm1.best <- lm(formula = AGBH.Mg.ha ~ mWD.g.m3 + mBA.cm2, data = na.omit(Tree))
+summary(lm1.best)
+```
+
+Compare to the intial model, the adjusted R-squared increases from 0.5101 to 0.5189, and the residual standard error falls from 87.29 to 86.5. Thus, we can conclude that this model is better than the initial one with only significant independent variables remained.
+
+## Results
+
+The regression model is significant ($R^2$ = 0.5189, $F_{2,67}$ = 38.21, $p$ =8.451e-12) with p value less than 0.05. The adjusted R-squared value is 0.5189, which means that the model with two independent variables explains about 51.89% of the variance in mean biomass while adjusting for the degrees of freedom and the number of predictors in the model.
+
+Both independent variables, mean wood density (p = .000266) and mean basal area (p = 2.99e-07), are significant predictors of mean biomass. The estimated coefficient for mean wood density is 587.59879, which means that for every one-unit increase in the mean wood density (g/m$^3$), the mean biomass is expected to increase by 587.59879 units, holding all other variables constant. Similarly, the estimated coefficient for mean basal area (cm$^2$) is 0.31271, which means that for every one-unit increase in the mean basal area, the mean biomass is expected to increase by 0.31271 units, holding all other variables constant.
+
+## Assumptions check
+
+## Visualization
+
+```{r, fig.width=6,fig.height=4,fig.align='center'}
+
+
+par(mfrow = c(2,2), mar = c(5,4,2,2))
+plot(lm1.best)
+# outlier remove
+# leverage plot counts
+
+mean(residuals(lm1.best))
+vif(lm1.best)
+```
+
+In this graph, there is not a statistically significant difference between the yeara 2010 and 1990 as illustrated by the fact that the CI overlaps 0 and the p-value is greater than 0.05. By contrast, there appears to be significant differences in biomass between the years 2010 and 1970 and years 1990 and 1970.
+
+Besides, I have also visualized the results via a barplot of the means of tusk weight and standard errors per year group with error bars.
+
+```{r}
+par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
+plot(lm1)
+```
+
+```{r}
+```
+
+# Problem 2
+
+## Hypothesis
+
+The null hypothesis is that the mean biomass growth is the same across all six levels of salt addition. While the alternative hypothesis is that the mean biomass growth is different across at least one pair of salt addition levels.
+
+## Model
+
+In order to test the hypothesis, a complete block design with salt addition as the factor and block as the blocking variable was utilized. It is "complete" because the treatments were assigned separately within each block, ensuring that each treatment was included at least once in every block.
+
+The main reason for not considering the interaction is that the blocks are not the focus of the experiment. The factor of interest is salt addition, and the blocks are simply a part of the experimental design. Moreover, I have also constructed an interaction plot to determine whether the interaction term should be included. However, the lines in the plot are nearly parallel, suggesting that there is no need for that interaction term.
+
+Besides, the block effect is better to be treated as a random effect. However, it is not feasible due to the small number of subjects (less than 6).
+
+```{r}
+ozone <- read.csv("labs/lab8 linear models with multiple predictors/ozone.data.csv")
+
+qqnorm(ozone$ozone)
+qqnorm(log(ozone$ozone))
+
+lm2 <- lm(log(ozone) ~ rad + temp + wind + rad:temp + rad:wind + temp:wind + rad:temp:wind, data = ozone)
+summary(lm2)
+
+lm2.1 <- update(lm2, ~.-rad:temp - rad:wind - rad:temp:wind)
+summary(lm2.1)
+
+lm2.2 <- update(lm2.1, ~.-temp:wind)
+summary(lm2.2)
+
+AIC(lm2, lm2.1, lm2.2)
+
+par(mfrow = c(2,2), mar = c(5,4,2,2))
+plot(lm2.1)
+
+par(mfrow = c(2,2), mar = c(5,4,2,2))
+plot(lm2.2)
+step(lm2.2)
+
+mean(residuals(lm2.1))
+mean(residuals(lm2.2))
+
+vif(lm2.1)
+vif(lm2.2)
+
+# which one is better? with or without interaction term?
+# interaction: better aic, mean residuals; slightly better diagnosis plots; better R squared
+# isolate predictors: better significance, vif
+with(ozone, interaction.plot(temp, wind, ozone))
+```
+
+Thus, I construct the model as follows:
+
+```{r}
+
+```
+
+Overall, the linear model analysis shows that the model is significant as a whole ($R^2$ = 0.826, $F_{8,15}$ = 14.6, $p$ = 8.593e-06 \< 0.001). The model's multiple R-squared is 0.8862, indicating that it explains a large proportion of the variation in plant biomass growth. The adjusted R-squared is 0.8255, indicating it has a good fit and is not overfitting the data.
+
+Generally, the analysis shows that both the salt and block factors have a significant effect on plant biomass growth. The estimate for the intercept is 15.5, representing the expected mean plant biomass growth when the salt level is 10 g m-2 and the plot is in block 1.
+
+The estimated coefficients for the factor "salt" represent the difference in mean plant biomass growth between the salt levels and the reference level (10 g m-2). The estimate for salt level 15 is 4.175, indicating that the mean biomass growth is significantly higher with an increase of 4.175 units for this level compared to the reference level (p = 0.05). On the contrary, the estimates for salt levels 20, 25, 30, and 35 are all negative, indicating a decrease in mean biomass growth compared to the reference level. All of these estimates are significant with p-values less than 0.01.
+
+The estimated coefficients for the factor "block" represent the difference in mean plant biomass growth between each block and the reference block (block 1). The estimate for blocks 2 and 3 show that their mean biomass growth is not significantly different from the reference block with p-value of 0.862 and 0.603, respectively. The estimate for block 4 is -6.5333 with a significant p-value, indicating that the mean biomass growth is significantly lower than the reference block by 6.5333 units.
+
+### Post-hoc test
+
+Besides the statistically significant main effects of salt and block reported by ANOVA results, I have also studied the group differences using the TukeyHSD test.
+
+```{r}
+
+```
+
+The Tukey tests reflect that there are significant differences between some of the salt addition levels. In other words, the plant biomass growth is significantly different between group pairs (10-20, 25, 30, 35) and pairs (15-20, 25, 30, 35). Thus, I find that the salt level groups of 10 and 15 are not different, and the other four levels 20, 25, 30, and 35 are not different. And from the illustration, it can be easily detected that the block 4 is significantly different than the other three blocks.
+
+### Assumptions
+
+At last, I also use the diagnosis plots to evaluate how well the model fits the data. The qq plot suggests that the residuals are normally distributed, which is an indication that the assumption of normality is met. However, the residual plots show a slightly twisted line, which could be a cause for concern. Despite this, the distribution of residuals appears to be random in the first and third graphs.
+
+In an effort to address this issue, a log-transformed model was attempted. However, upon examination of the diagnostic plots, it was found that this model does not produce significantly better results. As a result, I decide that the original model setting should be maintained.
+
+```{r}
+par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
+plot(lm2)
+```
+
+Besides, I also use some numeric tests to test whether the distribution of dependent variables meets the model assumptions rather than the residuals which have been tested in the diagnosis plots above. We can find that the p-values of `shapiro.test()` and `bartlett.test()` below are both greater than 0.05, indicating the null hypotheses that each group is normally distributed and the variances of groups are similar cannot be rejected. The homogeneity of variances of the dependent variable biomass is also illustrated in the figure.
+
+\newpage
+
+```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+
+```
