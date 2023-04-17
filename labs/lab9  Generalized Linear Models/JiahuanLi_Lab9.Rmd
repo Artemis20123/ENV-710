@@ -16,12 +16,11 @@ binary no dispersion test
 
 package to have words
 
-第一个最后只留x2 看每一个model LRT和initial model比较，不significant说明可以减少，significant说明得保留原model，然后看AIC，只留x2好
+第一个最后只留x2 看每一个model LRT和initial model比较，不significant说明可以减少，significant说明得保留原model，然后看AIC，只留x2好 （LRT each + AIC for all, minimum x2）
 
 assumption： plots，
 
-dispersiontest(nut1)
-overdispersion （chisq），
+dispersiontest(nut1) overdispersion （chisq），
 
 pchisq，pseudo-R2
 
@@ -31,29 +30,35 @@ mean(residuals(lm1.best))
 
 shapiro.test(residuals(lm2.best))
 
+(录音: assumption plot, overdis, pseudoR2)
+
 （count data，focus on proportion than numbers，use logistics instead of poission）
 
-第二题，最开始是三个参数相乘，最后简化为两项相加。binomial
+第二题，最开始是三个参数相乘，从最不显著的variable开始一个个移走，最后简化为两项相加 （YR + BK）。binomial
 
-original diagnosis plot不好，需要画DHARMa plot 参考上课ppt
+original diagnosis plot不好，需要画DHARMa plot 参考上课ppt，没有发现什么问题
 
-然后测试其它参数（pchisq，persedoR2），加上vif 测共线性
+然后测试其它参数（pchisq，persedoR2），加上vif 测共线性，goodness of fit,R2
 
 第三题，binomial 要包含random effect
-res5 \<- simulateResiduals(fittedModel = o5)
-\> plot(res5)
+
+没有reduce variable，上来就是significant的
+
+要check 多重共线性，inflation
+
+res5 \<- simulateResiduals(fittedModel = o5) \> plot(res5)
 
 画DHARMa plot, 原来的plots只有一个residual图，包含在dhar图里面了
 
 测以上合适的参数以外，再测随机效应所占比例 (MuMIn::r.squaredGLMM(o5); merTools::plotFEsim(FEsim(o5), intercept = T); dotplot(ranef(o5)))
 
-require(performance)
-check_overdispersion(o3) high dispersion \>2
+require(performance) check_overdispersion(o3) high dispersion \>2
 
-so, correct overdispersion by adding an observation-level random effect, but residuals don\'t look good
-plot(o3)
+so, correct overdispersion by adding an observation-level random effect, but residuals don't look good plot(o3)
 
 thus, using a negative binomial model
+
+after the DHARMa plot
 
 testZeroInflation(O0)
 
