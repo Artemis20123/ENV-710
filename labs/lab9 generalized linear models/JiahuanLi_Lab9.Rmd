@@ -1,5 +1,5 @@
 ---
-title: 'ENV 710: Lab 8'
+title: 'ENV 710: Lab 9'
 author: "Jiahuan Li"
 date: "Spring 2023"
 output: pdf_document
@@ -25,203 +25,359 @@ The null hypothesis for problem 1 is that there is no significant relationship b
 ### Data preview
 
 ```{r, warning=FALSE,message=FALSE}
-# air <- read.csv("./labs/lab9 Generalized Linear Models/AircraftDat.csv")
-air <- read.csv("AircraftDat.csv")
+air <- read.csv("./labs/lab9 Generalized Linear Models/AircraftDat.csv")
+# air <- read.csv("AircraftDat.csv")
 air$x1 <- factor(air$x1)
+```
 
+```{r, message=FALSE, fig.cap="Preview of Dataset"}
 ggpairs(air)
 summary(air)
 ```
 
-From the plot, we can find that
-
-first, cones ranges from 0 to 60, which is appropriate because the dependent variable needs to be a non-negative integer for Poisson regression. It also not normally distributed, which we don't expect it to be.
-
-Second, all the variable are continuous - no categorical independent variables. Third, there do not seem to be linear relationships between cones and the other variables in the raw data - that is fine too, because that is not an assumption of Poisson regression.
+From the plot and table, we can observe that the dependent variable varies from 1 to 30, which is appropriate because the dependent variable needs to be a non-negative integer for Poisson regression. It is also not normally distributed, which is also expected since the Poisson distribution is a discrete distribution. Furthermore, two of the independent variables, bomb load (in tons) and total months of aircrew experience, are continuous, and the other independent variable x1 is a categorical variable indicating the type of aircraft (A-4 or A-6). Moreover, there do not seem to be clear linear relationships between the dependent variable and the independent variables in the raw data - that is fine too, because that is not an assumption of Poisson regression.
 
 ### Initial model
 
-Poisson regression is considered in this case since the response variable consists of count data. Therefore, the initial model encompassing all potential influencing variables is formulated as follows:
+Poisson regression is utilized in this case since the response variable consists of count data. Therefore, the initial model encompassing all potential influencing variables is formulated as follows:
 
 ```{r}
 lm1 <- glm(y ~ as.factor(x1) + x2 + x3,
           data = air, family = poisson)
 summary(lm1)
-
-lm2.1<- update(lm1, ~.-as.factor(x1))
-summary(lm2.1)
-
-lm2.2 <- update(lm1, ~.-x2)
-summary(lm2.2)
-
-lm2.3 <- update(lm1, ~.-x3)
-summary(lm2.3)
-
-lm3.1 <- glm(y ~ as.factor(x1),
-          data = air, family = poisson)
-summary(lm3.1)
-
-lm3.2 <- glm(y ~ x2,
-          data = air, family = poisson)
-summary(lm3.2)
-
-lm3.3 <- glm(y ~ x3,
-          data = air, family = poisson)
-summary(lm3.3)
-
-library(lmtest)
-
-lrtest(lm1, lm2.1, lm2.2, lm2.3,lm3.1,lm3.2,lm3.3)
-
-
-# which is better
-# overdispersion? change the method to quasi?
-# which assumptions?
 ```
 
-The regression summary reveals that only the `intercept` and `mWD.g.m3` terms are statistically significant, suggesting that the model is likely not the minimum adequate model for the problem.
+The regression summary reveals that only the `x2` terms are statistically significant, suggesting that the model is likely not the minimum adequate model for the problem.
 
 ### Model reduction
 
-To determine the minimum adequate model, a backward stepwise regression approach is employed. Starting with the full model, the `step()` function is used to perform step-wise model selection.
+To identify the minimum adequate model, I constructed models for all possible combinations of variables and used LRT tests and AIC values to assess the performance of each model. The results are presented below:
 
 ```{r}
-step(lm1)
+lm2.1<- update(lm1, ~.-as.factor(x1))
+
+lm2.2 <- update(lm1, ~.-x2)
+
+lm2.3 <- update(lm1, ~.-x3)
+
+lm3.1 <- glm(y ~ as.factor(x1),
+          data = air, family = poisson)
+
+lm3.2 <- glm(y ~ x2,
+          data = air, family = poisson)
+
+lm3.3 <- glm(y ~ x3,
+          data = air, family = poisson)
+
+library(lmtest)
+
+lrtest(lm1,lm2.2)
+lrtest(lm1, lm2.1, lm3.2)
+lrtest(lm1,lm2.3,lm3.1)
 ```
 
-I use the Akaike Information Criterion (AIC) for model comparison. The `step(lm1)` reports the AIC number for each step (i.e., each nested model). For each step, the table displays the AIC numbers associated with the removal of specific predictors indicated by their respective row names.
+Based on the first LRT tests, it was found that removing `x2` from the model resulted in a significantly different reduced model compared to the original model, indicating that `x2` is an important variable in the model. Using the same method, results of all three tests jointly showed that only keeping the term `x2` in the regression is appropriate. As shown in the second test, the reduction process did not significantly impact the original model.
 
-For instance, the starting AIC number is 633.19. In this case, the AIC numbers for `factor(Tree.Fall)`, `mDBH.cm`, and `mH.m` are 629.96, 632.41, and 632.61, respectively, which are smaller than the model AIC of 633.19. Thus, removing these variables would result in a reduction of the model AIC number, indicating an improvement in the model. Then, examining the final step in which these three predictors were eliminated, we find an AIC number of 627.35. In this case, removing any of the remaining variables would cause an increase in AIC, indicating that the model has achieved the minimum adequate model.
+The minimum adequate model can also be justified using the Akaike Information Criterion.
+
+```{r}
+AIC(lm1,lm2.1,lm2.2,lm2.3,lm3.1,lm3.2,lm3.3)
+```
+
+We can find that the model with only `x2` as its predictor has the smallest AIC number (86.90196).
 
 ### Minimum adequate model
 
 ```{r echo=TRUE}
-lm1.best <- lm(formula = AGBH.Mg.ha ~ mWD.g.m3 + mBA.cm2, data = na.omit(Tree))
-summary(lm1.best)
+summary(lm3.2)
 ```
-
-Compare to the intial model, the adjusted R-squared increases from 0.5101 to 0.5189, and the residual standard error falls from 87.29 to 86.5. Thus, we can conclude that this model is better than the initial one with only significant independent variables remained.
 
 ## Results
 
-The regression model is significant ($R^2$ = 0.5189, $F_{2,67}$ = 38.21, $p$ =8.451e-12) with p value less than 0.05. The adjusted R-squared value is 0.5189, which means that the model with two independent variables explains about 51.89% of the variance in mean biomass while adjusting for the degrees of freedom and the number of predictors in the model.
+From the regression report, it can be concluded that bomb load has a significant positive impact on the damage of attack aircraft ($z$ = 4.942, $p$ \< 0.001). The coefficient is 0.23112, which means that for a one-unit increase in tons of bomb load, the expected damage of attack aircraft will increase by a factor of 1.26 ($exp^{0.23112}$). And the intercept does not have a practical interpretation since it assumes a bomb load of zero, which is not possible.
 
-Both independent variables, mean wood density (p = .000266) and mean basal area (p = 2.99e-07), are significant predictors of mean biomass. The estimated coefficient for mean wood density is 587.59879, which means that for every one-unit increase in the mean wood density (g/m$^3$), the mean biomass is expected to increase by 587.59879 units, holding all other variables constant. Similarly, the estimated coefficient for mean basal area (cm$^2$) is 0.31271, which means that for every one-unit increase in the mean basal area, the mean biomass is expected to increase by 0.31271 units, holding all other variables constant.
+The deviance residuals are a measure of how well the model fits the data. The residual deviance of 29.206 on 28 degrees of freedom, which are close, indicates that the model does not have a great concern about the over-dispersion issue. The null deviance is the deviance of a model with no predictors, and the residual deviance is the deviance of the fitted model. The difference between the two deviances represents the reduction in deviance achieved by the model. In this case, the reduction in deviance is 53.883 - 29.206 = 24.677, which indicates that the model is a significant improvement over the null model.
 
 ## Assumptions check
 
+```{r}
+mean(residuals(lm3.2))
+```
+
+The calculated mean error is very small (-0.1716) and close to 0 as expected, indicating that the model has a good fit to the data. Besides, the residuals are nearly independent and normally distributed as shown in the diagnosis plots. The plots also indicates that there is no overdispersion issue as 1) no more than 5% of the standardized residuals are greater than 2 in the scale-location plot; and 2) there are no outlier observations in the leverage plot. The dispersive test result also supported this with an overdispersion ratio of 1.037 less than 2.
+
+```{r, fig.cap="Assumption plots"}
+par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
+plot(lm3.2)
+```
+
+```{r, message=FALSE}
+library(AER)
+dispersiontest(lm3.2)
+```
+
+Then I tested the goodness of fit of the model using the chi-square goodness-of-fit test. I compared the residual deviance of the reduced model to a chi-square distribution with the same degrees-of-freedom. It returns a value of 0.40, which is not statistically significant and indicates the model is good.
+
+```{r include=FALSE}
+pchisq(lm3.2$deviance, lm3.2$df.residual, lower.tail=F)
+```
+
+The pseudo-$R^2$ test returns a value of 0.58, which is slightly less than the initial model with all the predictors (0.62). But the close and reletively high proportion still indicates the reduced model has a good ability to explain the variation in the dependent variable.
+
+```{r}
+library(DescTools)
+DescTools::PseudoR2(lm3.2, c("VeallZimmermann"))
+DescTools::PseudoR2(lm1, c("VeallZimmermann"))
+```
+
 ## Visualization
 
-```{r, fig.width=6,fig.height=4,fig.align='center'}
+The figure below displays the impact of bomb load on the damage of attack aircraft.
 
+```{r, fig.cap= "Impact of bomb load on the damage of attack aircraft",fig.align='center'}
 
-par(mfrow = c(2,2), mar = c(5,4,2,2))
-plot(lm1.best)
-# outlier remove
-# leverage plot counts
+eq1 <- function(x)
+{ exp(coef(lm3.2)[1] + coef(lm3.2)[2] * x)}
 
-mean(residuals(lm1.best))
-vif(lm1.best)
-```
-
-In this graph, there is not a statistically significant difference between the yeara 2010 and 1990 as illustrated by the fact that the CI overlaps 0 and the p-value is greater than 0.05. By contrast, there appears to be significant differences in biomass between the years 2010 and 1970 and years 1990 and 1970.
-
-Besides, I have also visualized the results via a barplot of the means of tusk weight and standard errors per year group with error bars.
-
-```{r}
-par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
-plot(lm1)
-```
-
-```{r}
+ggplot(air) +
+geom_point(aes(x = x2, y = y)) +
+stat_function(aes(x = x2), fun = eq1, geom = "line") +
+labs(x = "Bomb load (ton)", y = "Damage of attack aircraft")
 ```
 
 # Problem 2
 
 ## Hypothesis
 
-The null hypothesis is that the mean biomass growth is the same across all six levels of salt addition. While the alternative hypothesis is that the mean biomass growth is different across at least one pair of salt addition levels.
+The null hypothesis for this question is that there is no association between bird keeping and lung cancer, after accounting for age and smoking. The alternative hypothesis is that bird keeping is associated with a higher rate of lung cancer, after accounting for age and smoking.
 
-## Model
+## Method
 
-In order to test the hypothesis, a complete block design with salt addition as the factor and block as the blocking variable was utilized. It is "complete" because the treatments were assigned separately within each block, ensuring that each treatment was included at least once in every block.
-
-The main reason for not considering the interaction is that the blocks are not the focus of the experiment. The factor of interest is salt addition, and the blocks are simply a part of the experimental design. Moreover, I have also constructed an interaction plot to determine whether the interaction term should be included. However, the lines in the plot are nearly parallel, suggesting that there is no need for that interaction term.
-
-Besides, the block effect is better to be treated as a random effect. However, it is not feasible due to the small number of subjects (less than 6).
+### Data preview
 
 ```{r}
-ozone <- read.csv("labs/lab8 linear models with multiple predictors/ozone.data.csv")
+library(Sleuth3)
+data(case2002)
 
-qqnorm(ozone$ozone)
-qqnorm(log(ozone$ozone))
-
-lm2 <- lm(log(ozone) ~ rad + temp + wind + rad:temp + rad:wind + temp:wind + rad:temp:wind, data = ozone)
-summary(lm2)
-
-lm2.1 <- update(lm2, ~.-rad:temp - rad:wind - rad:temp:wind)
-summary(lm2.1)
-
-lm2.2 <- update(lm2.1, ~.-temp:wind)
-summary(lm2.2)
-
-AIC(lm2, lm2.1, lm2.2)
-
-par(mfrow = c(2,2), mar = c(5,4,2,2))
-plot(lm2.1)
-
-par(mfrow = c(2,2), mar = c(5,4,2,2))
-plot(lm2.2)
-step(lm2.2)
-
-mean(residuals(lm2.1))
-mean(residuals(lm2.2))
-
-vif(lm2.1)
-vif(lm2.2)
-
-# which one is better? with or without interaction term?
-# interaction: better aic, mean residuals; slightly better diagnosis plots; better R squared
-# isolate predictors: better significance, vif
-with(ozone, interaction.plot(temp, wind, ozone))
+case2002$cancer <- ifelse(case2002$LC == "NoCancer", 0, 1)
 ```
 
-Thus, I construct the model as follows:
-
-```{r}
-
+```{r, message=FALSE, fig.cap="Preview of Dataset"}
+ggpairs(case2002)
 ```
 
-Overall, the linear model analysis shows that the model is significant as a whole ($R^2$ = 0.826, $F_{8,15}$ = 14.6, $p$ = 8.593e-06 \< 0.001). The model's multiple R-squared is 0.8862, indicating that it explains a large proportion of the variation in plant biomass growth. The adjusted R-squared is 0.8255, indicating it has a good fit and is not overfitting the data.
+From the plot, we can observe that there might be some interactions among the predictors. Thus, we begin our initial model include all the potential interactions.
 
-Generally, the analysis shows that both the salt and block factors have a significant effect on plant biomass growth. The estimate for the intercept is 15.5, representing the expected mean plant biomass growth when the salt level is 10 g m-2 and the plot is in block 1.
+### Initial model
 
-The estimated coefficients for the factor "salt" represent the difference in mean plant biomass growth between the salt levels and the reference level (10 g m-2). The estimate for salt level 15 is 4.175, indicating that the mean biomass growth is significantly higher with an increase of 4.175 units for this level compared to the reference level (p = 0.05). On the contrary, the estimates for salt levels 20, 25, 30, and 35 are all negative, indicating a decrease in mean biomass growth compared to the reference level. All of these estimates are significant with p-values less than 0.01.
-
-The estimated coefficients for the factor "block" represent the difference in mean plant biomass growth between each block and the reference block (block 1). The estimate for blocks 2 and 3 show that their mean biomass growth is not significantly different from the reference block with p-value of 0.862 and 0.603, respectively. The estimate for block 4 is -6.5333 with a significant p-value, indicating that the mean biomass growth is significantly lower than the reference block by 6.5333 units.
-
-### Post-hoc test
-
-Besides the statistically significant main effects of salt and block reported by ANOVA results, I have also studied the group differences using the TukeyHSD test.
+Logistic regression is utilized in this case. The initial model encompassing all potential influencing variables and interactions is formulated as follows:
 
 ```{r}
-
+lmm1 <- glm(cancer ~ factor(BK)*AG*YR, family=binomial, data=case2002)
+summary(lmm1)
 ```
 
-The Tukey tests reflect that there are significant differences between some of the salt addition levels. In other words, the plant biomass growth is significantly different between group pairs (10-20, 25, 30, 35) and pairs (15-20, 25, 30, 35). Thus, I find that the salt level groups of 10 and 15 are not different, and the other four levels 20, 25, 30, and 35 are not different. And from the illustration, it can be easily detected that the block 4 is significantly different than the other three blocks.
+All the predictors are not statistically significant in the report, suggesting that the model is not the minimum adequate model for the problem.
 
-### Assumptions
+### Model reduction
 
-At last, I also use the diagnosis plots to evaluate how well the model fits the data. The qq plot suggests that the residuals are normally distributed, which is an indication that the assumption of normality is met. However, the residual plots show a slightly twisted line, which could be a cause for concern. Despite this, the distribution of residuals appears to be random in the first and third graphs.
+I used a stepwise variable selection method, removing predictors with higher p-values first, until the remaining predictors all had p-values below a certain threshold (e.g., 0.05). This approach helps to simplify the model and avoid overfitting, while retaining predictors that are most strongly associated with the response variable.
 
-In an effort to address this issue, a log-transformed model was attempted. However, upon examination of the diagnostic plots, it was found that this model does not produce significantly better results. As a result, I decide that the original model setting should be maintained.
+```{r include=FALSE}
+lmm2 <- update(lmm1, ~.-AG)
+summary(lmm2)
+lmm3 <- update(lmm2, ~.-factor(BK):AG)
+summary(lmm3)
+lmm4 <- update(lmm3, ~.-factor(BK):YR)
+summary(lmm4)
+lmm5 <- update(lmm4, ~.-factor(BK):YR:AG)
+summary(lmm5)
+lmm6 <- update(lmm5, ~.-YR:AG)
+```
+
+At last, only the predictor `BK` and `YR` are included in the reduced model.
+
+```{r echo=FALSE}
+summary(lmm6)
+```
 
 ```{r}
+lrtest(lmm1, lmm2, lmm3, lmm4, lmm5, lmm6)
+AIC(lmm1, lmm2, lmm3, lmm4, lmm5, lmm6)
+```
+
+We can justify this model by referring to the LRT test and AIC number. Specifically, the AIC numbers for model 4,5, and 6 are very close with a gap less than 2. It is acceptable and, thus, the simplest model (model 6) should be our choice.
+
+## Results
+
+The regression model is a logistic regression with cancer as the response variable and bird-keeping status (BK) and years smoked (YR) as predictors. The intercept (coefficient for the reference level of the factor variable BK , which is "Bird" in this case, and the numeric variable YR, which equals to 0 in this case) is -1.70460 in log-odds scale and 0.18 in odd scale, which is statistically significant (p \< 0.01).
+
+The hypothesis that bird keepers have higher rates of lung cancer than non-bird keepers is supported by the regression result. Specifically, changing from the bird keeper group to the non-bird keeper group will cause a 1.48 decrease in log-odds scale ($z$ = -3.727, $p$ \< 0.001). It implies that the probability of getting lung cancer will decrease by 77%.
+
+Besides, for a one-unit increase in smoking, the expected change in log-odds is 0.05825 ($z$ = 3.458, $p$ \< 0.001), which corresponds to a change of 1.06 in the odds of survival. And the coefficient can be interpreted as: for each additional year smoked, the odds of getting lung cancer change by a factor of 1.06 (or increase by 6%), holding bird keeping status constant.
+
+## Assumptions check
+
+To test the goodness of fit, `pchisq`, `hoslem`, and `PseudoR2` tests have been conducted. Values larger than 0.05 (a certain significant level) shown in the first two tests indicate that the null hypotheses (the model is good) cannot be rejected. The relatively large R2 value of the reduced model (0.29), with 0.33 for the original one, also reveals that the model is good.
+
+```{r echo=FALSE}
+library(ResourceSelection)
+pchisq(lmm6$deviance, lmm6$df.residual, lower=F)
+hoslem.test(case2002$cancer, fitted(lmm6))
+
+DescTools::PseudoR2(lmm6, c("VeallZimmermann"))
+DescTools::PseudoR2(lmm1, c("VeallZimmermann"))
+```
+
+```{r}
+mean(residuals(lmm6))
+vif(lmm6)
+```
+
+The calculated mean error is very small (-0.087) and close to 0 as expected, indicating that the model has a good fit to the data. Furthermore, the variance inflation factors (VIF) are around 1.03 for BK and YR in this case, indicating that multicollinearity is not an issue. That is, the independent variables are not highly correlated with each other.
+
+Also, the traditional diagnosis plots and DHARMa plots did not report potential conflicts with the model assumptions.
+
+```{r, fig.cap="Assumption plots", fig.pos="h"}
 par(mfrow=c(2,2), mar = c(3.8, 4, 3, 2))
-plot(lm2)
+plot(lmm6)
 ```
 
-Besides, I also use some numeric tests to test whether the distribution of dependent variables meets the model assumptions rather than the residuals which have been tested in the diagnosis plots above. We can find that the p-values of `shapiro.test()` and `bartlett.test()` below are both greater than 0.05, indicating the null hypotheses that each group is normally distributed and the variances of groups are similar cannot be rejected. The homogeneity of variances of the dependent variable biomass is also illustrated in the figure.
+```{r, fig.cap="DHARMa plots", fig.pos="h"}
+library(DHARMa)
+lm6 <- simulateResiduals(fittedModel = lmm6) 
+plot(lm6)
+```
+
+## Visualization
+
+The figure displays the impacts of bird keeper and year of smoke on lung cancer rate.
+
+```{r, fig.cap= "Impacts of bomb of bird keeper and year of smoke on lung cancer rate",fig.align='center', fig.pos="h"}
+library(boot)
+
+jcoPalette <- c("#0073C2FF", "#EFC000FF", "#868686FF", "#CD534CFF",
+"#7AA6DCFF", "#003C67FF", "#8F7700FF", "#3B3B3BFF", "#A73030FF",
+"#4A6990FF")
+# plot the data points
+plot(jitter(case2002$YR), case2002$cancer, las=1, pch=21, cex=1.2, bg="grey",
+     xlab = "Year of smoking", ylab = "Lung cancer risk", cex.axis = 0.8,
+     cex.lab = 0.8)
+
+# add curves for bird and no-bird
+x <- seq(min(case2002$YR), max(case2002$YR), length = 50)
+curve(expr = inv.logit(lmm6$coef[1] + lmm6$coef[2] + lmm6$coef[3]*x), add=T,
+      lwd=2, col= jcoPalette[9], lty = 1)
+curve(expr = inv.logit(lmm6$coef[1] + lmm6$coef[3]*x), add=T,
+      lwd=2, col= jcoPalette[10], lty = 2)
+points(case2002$YR, fitted(lmm6))
+
+# add a legend
+legend("topright", legend=c("Bird keeper", "Non-bird keeper"), lty=c(1, 2), col=c(jcoPalette[9], jcoPalette[10]), bty="n", cex=0.8)
+```
+
+## Prediction
+
+```{r echo=TRUE}
+inv.logit (coef(lmm6)[1] +coef(lmm6)[3]*32)
+inv.logit(coef(lmm6)[1])
+```
+
+The probability of having lung cancer is 54.0% if you are a bird keeper and have smoked for 32 years. And the probability of the intercept is 15.4%, which means the individual is a bird keeper and have not smoked.
+
+# Problem 3
+
+## Hypothesis
+
+We want to test whether well depth, distance from the mine, and site affect the proportion of contaminated wells at a site. $H_0:$ The proportion of contaminated wells is not affected by well depth, distance from the mine, and site. $H_a:$ The proportion of contaminated wells is affected by at least one of the factors including well depth, distance from the mine, and/or site.
+
+## Method
+
+### Data preview
+
+```{r, message=FALSE,warning=FALSE, fig.cap="Preview of Dataset", fig.pos="h"}
+water <- read.csv("./labs/lab9 Generalized Linear Models/water.csv")
+ggpairs(water)
+```
+
+### Model
+
+Because the site effect is considered in this model and the response can be summarized in two groups, a random effect logistic model should be established.
+
+```{r}
+library(lme4)
+llm <- glmer(cbind(Y, N-Y) ~ well_depth + dist_mine + (1|site), data = water, family = binomial)
+```
+
+```{r, warning=FALSE}
+summary(llm)
+```
+
+There is no need to reduce the model since all the predictors are significant.
+
+## Results
+
+The model has a log-likelihood of -45.9, an AIC of 99.8, and a BIC of 107.4. The AIC and BIC values indicate that the model is a good fit for the data. The scaled residuals have a mean of zero and a standard deviation of one, which indicates that the model assumptions are met. The response variable is a binomial variable that represents the number of contaminated wells out of the total number of tested wells at each site. The model includes three fixed effects: well_depth, dist_mine, and an intercept, and a random intercept for each site (grouped by the n variable).
+
+The coefficient for well_depth is 0.06869 ($z$ = 3.059, $p$ \< 0.05). This indicates that, holding the distance to mine constant, a one-unit increase in well depth is associated with a 0.06869 increase in the log-odds of a well being contaminated (increase by a factor of 1.07 in the odd scale). The coefficient for dist_mine is -0.12855 ($z$ = -11.215, $p$ \< 0.05). This indicates that, holding well depth constant, a one-unit increase in the distance to mine is associated with a -0.12855 decrease in the log-odds scale, which is a 12% decrease in the odd scale. The correlation between well_depth and dist_mine is -0.122, which indicates that there is a weak negative correlation between the two predictor variables.
+
+In conclusion, the model suggests that well_depth and dist_mine have significant effects on the proportion of contaminated wells at a site. Specifically, increasing well depth is associated with an increase in the probability of a well being contaminated, while increasing the distance to mine is associated with a decrease in the probability of a well being contaminated.
+
+## Assumptions check
+
+```{r,warning=FALSE}
+mean(residuals(llm))
+vif(llm)
+
+library(MuMIn)
+MuMIn::r.squaredGLMM(llm)
+```
+
+The calculated mean error is very small (0.025) and close to 0, indicating that the model has a good fit to the data. Furthermore, the variance inflation factors (VIF) are around 1 for both well_depth and dist_mine in this case, indicating that multicollinearity is not an issue.
+
+Besides, the values for R2m (0.987) and R2c (0.999) show that the fixed and random effects of the model explain a substantial proportion of the variation in the response variable. The differences between the full and null models are quite large, indicating that the model provides a good fit to the data.
+
+We can also justify the goodness of the model from the DHARMa residuals plots. No conflicts with the assumptions are reported by the plots.
+
+```{r, fig.cap="DHARMa plots", fig.pos="h"}
+library(DHARMa)
+llm1 <- simulateResiduals(fittedModel = llm) 
+plot(llm1)
+```
+
+```{r, fig.cap="zero inflation test", fig.height=6, fig.pos="h"}
+testZeroInflation(llm1)
+```
+
+The "ratioObsSim" value in the report indicates the ratio of observed zeros to expected zeros based on simulations under the null hypothesis that the model is correctly specified. A value close to 1 suggests a good fit between the observed and expected distributions of zeros. In this case, the value is 0.927, which indicates a slight deviation from the expected distribution of zeros. The "p-value" in the report represents the probability of observing a ratio as extreme or more extreme than the observed ratio, assuming that the model is correctly specified. In this case, the p-value is 0.528, which is greater than the commonly used significance level of 0.05. Therefore, we do not reject the null hypothesis that the model is correctly specified.
+
+Overall, the results of the DHARMa zero-inflation test suggest that the model adequately accounts for zero-inflation in the data, and that the observed and expected distributions of zeros are similar. Thus, it is not an issue in this case. Also, the result of nonparametric dispersion test indicates the overdispersion issue does not need to be concerned in this model.
+
+## Visualization
+
+Since the proportion of random effect is small in this case, only the main fixed effects of the two predictors are visualized in the two graphs, holding the other variable constant as its mean value.
+
+```{r, fig.cap= "Impacts of well depth on well pollution",fig.align='center'}
+llm2 <- glm(cbind(Y, N-Y) ~ well_depth + dist_mine, data = water, family = binomial)
+
+eq3.dep <- function(x)
+{ inv.logit(coef(llm2)[1] + coef(llm2)[2] * x + coef(llm2)[3] * mean(water$dist_mine))}
+
+ggplot(water) +
+geom_point(aes(x = well_depth, y = Y/N)) +
+stat_function(aes(x = well_depth), fun = eq3.dep, geom = "line") +
+labs(x = "Well depth", y = "Well pollution possibility")
+```
+
+```{r, fig.cap= "Impacts of distance to mine on well pollution",fig.align='center'}
+eq3.dis <- function(x)
+{ inv.logit(coef(llm2)[1] + coef(llm2)[2] * mean(water$well_depth) + coef(llm2)[3] * x)}
+
+ggplot(water) +
+geom_point(aes(x = dist_mine, y = Y/N)) +
+stat_function(aes(x = dist_mine), fun = eq3.dis, geom = "line") +
+labs(x = "Distance to mine", y = "Well pollution possibility")
+```
 
 \newpage
 

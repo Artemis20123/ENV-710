@@ -47,7 +47,7 @@ The regression summary reveals that only the `intercept` and `mWD.g.m3` terms ar
 
 ### Model reduction
 
-To determine the minimum adequate model, a backward stepwise regression approach is employed. Starting with the full model, the `step()` function is used to perform step-wise model selection.
+To determine the minimum adequate model, I .
 
 ```{r}
 step(lm1)
